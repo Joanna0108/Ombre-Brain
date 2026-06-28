@@ -1746,6 +1746,9 @@
   /* ============================================================
      时间线视图 — 纵向节点式，侘寂拟物
      ============================================================ */
+  /* 日历和时间线有独立内部布局，不需要 content 的大 padding */
+  #calendar-view.content, #timeline-view.content { padding: 32px 24px; }
+
   .tl-wrap { position: relative; }
   .tl-empty { padding: 48px; text-align: center; color: var(--text-dim); font-style: italic; background: var(--surface); border-radius: 16px; border: 1px dashed var(--border); font-family: 'Noto Serif SC', serif; }
   .tl-stats-bar { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; font-size: 11px; font-family: 'Share Tech Mono', monospace; color: var(--text-dim); }
