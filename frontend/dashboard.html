@@ -1790,6 +1790,97 @@
   .tl-end { display: flex; align-items: center; gap: 14px; padding: 8px 0 0; }
   .tl-end-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 1px dashed var(--text-light); margin-left: 52px; }
   .tl-end-label { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--text-dim); }
+
+  /* ============================================================
+     情绪罗盘 / Mood Timeline — Russell Circumplex + 折线 + 日卡
+     ============================================================ */
+  #mood-view.content { padding: 32px 24px; }
+
+  .mood-header { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  .mood-title-row { display: flex; align-items: baseline; gap: 12px; }
+  .mood-title { margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; font-style: italic; color: var(--text); }
+  .mood-subtitle { font-size: 11px; font-family: 'Share Tech Mono', monospace; color: var(--text-dim); letter-spacing: 0.04em; }
+  .mood-stats { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-dim); display: flex; gap: 16px; flex-wrap: wrap; }
+  .mood-stats b { color: var(--text); font-weight: 600; }
+
+  .mood-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 28px; }
+  .mood-panel {
+    background: var(--surface); border-radius: var(--shell-radius);
+    padding: 20px; position: relative;
+    box-shadow: 5px 5px 13px var(--shadow-dark-subtle), -4px -4px 10px var(--shadow-light);
+    border: 1px solid var(--border);
+  }
+  .mood-compass-panel { display: flex; align-items: center; justify-content: center; }
+  #mood-compass-canvas { display: block; width: 320px; height: 320px; max-width: 100%; }
+  .mood-chart-panel { display: flex; flex-direction: column; gap: 8px; }
+  .mood-chart-legend { display: flex; gap: 18px; justify-content: flex-end; }
+  .mood-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; font-family: 'Share Tech Mono', monospace; color: var(--text-dim); }
+  .mood-legend-swatch { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+  .mood-legend-v { background: var(--accent); box-shadow: 0 0 4px var(--accent-glow); }
+  .mood-legend-a { background: var(--negative); box-shadow: 0 0 4px rgba(190,90,65,0.30); }
+  #mood-chart-canvas { display: block; width: 100%; height: 260px; }
+
+  .mood-tooltip {
+    position: absolute; pointer-events: none; z-index: 50;
+    background: rgba(44,42,38,0.92); color: #E7E2D8; font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; padding: 8px 12px; border-radius: 8px; max-width: 240px;
+    line-height: 1.5; letter-spacing: 0.03em;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35); border: 1px solid rgba(194,152,47,0.35);
+  }
+  .mood-tooltip .tt-time { color: var(--accent-light); }
+  .mood-tooltip .tt-name { font-weight: 600; }
+
+  .mood-days-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 10px; margin-bottom: 12px;
+    border-bottom: 1px dashed var(--border);
+    font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; color: var(--text-dim);
+  }
+
+  .mood-day-card {
+    background: var(--surface); border-radius: var(--radius-inner);
+    padding: 14px 18px; margin-bottom: 10px; cursor: pointer;
+    box-shadow: 3px 3px 8px var(--shadow-dark-subtle), -2px -2px 6px var(--shadow-light);
+    border: 1px solid transparent; transition: all 0.2s ease;
+  }
+  .mood-day-card:hover { transform: translateY(-2px); box-shadow: 5px 5px 14px var(--shadow-dark), -3px -3px 10px var(--shadow-light); }
+  .mood-day-card.expanded { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow), 5px 5px 14px var(--shadow-dark-subtle), -4px -4px 10px var(--shadow-light); }
+
+  .mood-day-header-row { display: flex; align-items: center; gap: 12px; }
+  .mood-day-date { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; font-style: italic; color: var(--text); min-width: 28px; text-align: right; }
+  .mood-day-mo { font-family: 'Cormorant Garamond', serif; font-size: 12px; font-style: italic; color: var(--text-dim); margin-right: 2px; }
+  .mood-day-wk { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-light); letter-spacing: 0.12em; min-width: 28px; }
+  .mood-emotion-band { flex: 1; height: 10px; border-radius: 5px; min-width: 60px; position: relative; overflow: visible; }
+  .mood-emotion-band::after { content: ''; position: absolute; inset: 0; border-radius: 5px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.25), transparent 40%, transparent 60%, rgba(0,0,0,0.18)); }
+  .mood-day-count { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+  .mood-day-vrange { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-light); white-space: nowrap; }
+
+  .mood-day-expand { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); display: none; }
+  .mood-day-card.expanded .mood-day-expand { display: block; }
+
+  .mood-memory-row { display: flex; align-items: center; gap: 8px; padding: 7px 6px; border-radius: 6px; cursor: pointer; transition: background 0.12s; }
+  .mood-memory-row:hover { background: var(--surface-solid); }
+  .mood-memory-time { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-light); width: 40px; flex-shrink: 0; }
+  .mood-memory-icon { width: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .mood-memory-title { font-weight: 500; color: var(--text); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+  .mood-memory-summary { color: var(--text-dim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1.5; min-width: 0; }
+  .mood-memory-sep { color: var(--text-light); flex-shrink: 0; }
+
+  .mood-empty {
+    padding: 48px; text-align: center; color: var(--text-dim); font-style: italic;
+    background: var(--surface); border-radius: var(--radius-inner); border: 1px dashed var(--border);
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  /* responsive: stack compass + chart vertically on narrow screens */
+  @media (max-width: 768px) {
+    .mood-panels { grid-template-columns: 1fr; }
+    #mood-compass-canvas { width: 260px; height: 260px; }
+    #mood-chart-canvas { height: 200px; }
+    .mood-day-header-row { flex-wrap: wrap; gap: 8px; }
+    .mood-emotion-band { flex: 1 0 100%; order: 10; }
+  }
 </style>
 </head>
 <body>
@@ -1848,6 +1939,7 @@
   <div class="tab" data-tab="network"><span>记忆网络</span><span class="tab-en">Network</span></div>
   <div class="tab" data-tab="calendar"><span>日历</span><span class="tab-en">Calendar</span></div>
   <div class="tab" data-tab="timeline"><span>时间线</span><span class="tab-en">Timeline</span></div>
+  <div class="tab" data-tab="mood"><span>情绪</span><span class="tab-en">Mood</span></div>
   <div class="tab" data-tab="tools"><span>工具箱</span><span class="tab-en">Toolbox</span></div>
   <div class="tab" data-tab="plan"><span>计划</span><span class="tab-en">Plans</span></div>
   <div class="tab" data-tab="letters"><span>信</span><span class="tab-en">Letters</span></div>
@@ -2973,6 +3065,38 @@
   </div>
 </div>
 
+<!-- ====== Mood Timeline View ====== -->
+<div class="content" id="mood-view" style="display:none">
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="mood-header">
+      <div class="mood-title-row">
+        <h3 class="mood-title">◐ 情绪罗盘</h3>
+        <span class="mood-subtitle">Russell Circumplex · 效价 × 唤醒</span>
+      </div>
+      <div class="mood-stats" id="mood-stats">—</div>
+    </div>
+    <div class="mood-panels">
+      <div class="mood-panel mood-compass-panel">
+        <canvas id="mood-compass-canvas"></canvas>
+        <div id="mood-compass-tooltip" class="mood-tooltip" style="display:none;"></div>
+      </div>
+      <div class="mood-panel mood-chart-panel">
+        <div class="mood-chart-legend">
+          <span class="mood-legend-item"><span class="mood-legend-swatch mood-legend-v"></span>效价 Valence</span>
+          <span class="mood-legend-item"><span class="mood-legend-swatch mood-legend-a"></span>唤醒 Arousal</span>
+        </div>
+        <canvas id="mood-chart-canvas"></canvas>
+        <div id="mood-chart-tooltip" class="mood-tooltip" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="mood-days-header">
+      <span>按天展开</span>
+      <span style="font-size:11px;color:var(--text-dim);" id="mood-days-count"></span>
+    </div>
+    <div id="mood-days"></div>
+  </div>
+</div>
+
 <!-- Onboarding modal (iter 1.6 §8): 仅当 env+config 都没有任何 key 时弹出 -->
 <div id="onboarding-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;">
   <div style="background:var(--surface-solid);max-width:520px;width:92%;padding:32px 28px;border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.25);">
@@ -3844,6 +3968,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('about-view').style.display = target === 'about' ? '' : 'none';
     document.getElementById('calendar-view').style.display = target === 'calendar' ? '' : 'none';
     document.getElementById('timeline-view').style.display = target === 'timeline' ? '' : 'none';
+    document.getElementById('mood-view').style.display = target === 'mood' ? '' : 'none';
     if (target !== 'network' && _netRAF) { cancelAnimationFrame(_netRAF); _netRAF = null; }
     if (target === 'network') loadNetwork();
     if (target === 'tools') loadToolsPanel();
@@ -3871,6 +3996,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     if (target === 'about') loadAbout();
     if (target === 'calendar') renderCalendar();
     if (target === 'timeline') renderTimeline();
+    if (target === 'mood') renderMood();
   });
 });
 
@@ -3904,6 +4030,7 @@ async function loadBuckets() {
     // 如果日历或时间线 tab 当前可见，自动刷新
     if (document.getElementById('calendar-view').style.display !== 'none') renderCalendar();
     if (document.getElementById('timeline-view').style.display !== 'none') renderTimeline();
+    if (document.getElementById('mood-view').style.display !== 'none') renderMood();
   } catch (e) {
     document.getElementById('bucket-list').innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
   }
@@ -7765,6 +7892,426 @@ function renderTimeline() {
   }
   html += '<div class="tl-end"><div class="tl-end-dot"></div><div class="tl-end-label">时间线起点</div></div>';
   document.getElementById('tl-wrap').innerHTML = html;
+}
+
+// ============================================================
+// 情绪罗盘 / Mood Timeline — Russell Circumplex + 折线 + 日卡
+// ============================================================
+
+var _moodState = { selectedDayIdx: -1, expandedDayIdx: -1, moodData: null, compassHover: null, chartHover: null };
+
+// valence→Canvas rgb: 0.0=#BE5A41(赤), 0.5=#B89762(铜), 1.0=#87A987(绿)
+function valenceRGB(v) {
+  var r, g, b;
+  if (v <= 0.5) {
+    var t = v / 0.5;
+    r = Math.round(190 + (184 - 190) * t);
+    g = Math.round(90 + (151 - 90) * t);
+    b = Math.round(65 + (98 - 65) * t);
+  } else {
+    var t = (v - 0.5) / 0.5;
+    r = Math.round(184 + (135 - 184) * t);
+    g = Math.round(151 + (169 - 151) * t);
+    b = Math.round(98 + (135 - 98) * t);
+  }
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
+var WK_SHORT = ['周日','周一','周二','周三','周四','周五','周六'];
+
+function buildMoodData() {
+  var dayMap = new Map();
+  for (var i = 0; i < allBuckets.length; i++) {
+    var b = allBuckets[i];
+    var dt = bucketDate(b);
+    if (!dt) continue;
+    var v = b.valence, a = b.arousal;
+    if (v == null && a == null) continue;
+    if (v == null) v = 0.5; if (a == null) a = 0.3;
+    var key = dayKeyOf(dt);
+    if (!dayMap.has(key)) dayMap.set(key, []);
+    dayMap.get(key).push({
+      id: b.id, time: String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0'),
+      valence: v, arousal: a, name: b.name || b.id, summary: b.summary || '',
+      type: b.type || 'dynamic', importance: b.importance || 5,
+      highlight: !!b.highlight, feel: b.type === 'feel'
+    });
+  }
+  var days = [];
+  dayMap.forEach(function(items, date) {
+    var parts = date.split('-');
+    var dt = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    var sumV = 0, sumA = 0, minV = 1, maxV = 0, minA = 1, maxA = 0;
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      sumV += it.valence; sumA += it.arousal;
+      if (it.valence < minV) minV = it.valence;
+      if (it.valence > maxV) maxV = it.valence;
+      if (it.arousal < minA) minA = it.arousal;
+      if (it.arousal > maxA) maxA = it.arousal;
+    }
+    items.sort(function(a, b) { return a.time.localeCompare(b.time); });
+    days.push({
+      date: date, weekday: WK_SHORT[dt.getDay()], items: items,
+      avgV: sumV / items.length, avgA: sumA / items.length,
+      vRange: [minV, maxV], aRange: [minA, maxA], count: items.length
+    });
+  });
+  days.sort(function(a, b) { return a.date.localeCompare(b.date); });
+  return days;
+}
+
+// ---- Russell 环形罗盘 (Canvas) ----
+function renderMoodCompass(moodData, selIdx) {
+  var canvas = document.getElementById('mood-compass-canvas');
+  if (!canvas) return;
+  var panel = canvas.parentElement;
+  var size = Math.min(panel.offsetWidth - 40, 320);
+  canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = size * dpr; canvas.height = size * dpr;
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr);
+  var W = size, H = size, cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.42;
+
+  // 1) LCD 底纹
+  ctx.fillStyle = 'rgba(199,201,188,0.06)'; ctx.fillRect(0, 0, W, H);
+
+  // 2) 四象限淡彩
+  var quads = [
+    [ -Math.PI/2, 0, 'rgba(194,152,47,0.07)', 'rgba(194,152,47,0.0)' ],   // 右上 高唤醒+正面
+    [ Math.PI, -Math.PI/2, 'rgba(190,90,65,0.06)', 'rgba(190,90,65,0.0)' ], // 左上 高唤醒+负面
+    [ Math.PI/2, Math.PI, 'rgba(110,105,94,0.05)', 'rgba(110,105,94,0.0)' ],// 左下 低唤醒+负面
+    [ 0, Math.PI/2, 'rgba(135,169,135,0.05)', 'rgba(135,169,135,0.0)' ]     // 右下 低唤醒+正面
+  ];
+  for (var qi = 0; qi < 4; qi++) {
+    var q = quads[qi];
+    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R + 4);
+    grad.addColorStop(0, q[2]); grad.addColorStop(1, q[3]);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R + 4, q[0], q[1]); ctx.lineTo(cx, cy); ctx.fill();
+  }
+
+  // 3) 同心环
+  for (var ri = 1; ri <= 3; ri++) {
+    var rr = R * ri / 4;
+    ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(150,138,116,' + (ri === 2 ? '0.30' : '0.18') + ')';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash(ri === 1 || ri === 3 ? [3, 5] : []); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // 4) 十字轴
+  ctx.strokeStyle = 'rgba(150,138,116,0.35)'; ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(cx - R - 6, cy); ctx.lineTo(cx + R + 6, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - R - 6); ctx.lineTo(cx, cy + R + 6); ctx.stroke();
+
+  // 5) 标签
+  ctx.fillStyle = '#6E695E'; ctx.font = '10px "Share Tech Mono", monospace'; ctx.textAlign = 'center';
+  ctx.fillText('▲ 高唤醒', cx, cy - R - 10);
+  ctx.fillText('▼ 低唤醒', cx, cy + R + 16);
+  ctx.fillText('◀ 负面', cx - R - 12, cy + 4);
+  ctx.fillText('正面 ▶', cx + R + 12, cy + 4);
+
+  // 6) 散点
+  var allDots = [];
+  if (moodData && moodData.length) {
+    for (var di = 0; di < moodData.length; di++) {
+      var day = moodData[di], isSel = (di === selIdx);
+      for (var ii = 0; ii < day.items.length; ii++) {
+        var it = day.items[ii];
+        var px = cx + (it.valence - 0.5) * 2 * R;
+        var py = cy - (it.arousal - 0.5) * 2 * R;
+        var r = 2.2 + (it.importance / 10) * 2.8;
+        var alpha = isSel ? 0.88 : 0.10;
+        var col = valenceRGB(it.valence);
+        ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+        ctx.fillStyle = col.replace('rgb', 'rgba').replace(')', ', ' + alpha + ')');
+        if (isSel && it.importance >= 7) { ctx.shadowColor = col; ctx.shadowBlur = 7; }
+        ctx.fill();
+        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+        allDots.push({x: px, y: py, r: r + 3, item: it, dayIdx: di, date: day.date});
+      }
+    }
+  }
+
+  // 7) 外环
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(199,192,178,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+
+  // 8) 中心点
+  ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(150,138,116,0.5)'; ctx.fill();
+
+  canvas._moodDots = allDots; canvas._moodCX = cx; canvas._moodCY = cy;
+}
+
+// ---- 情绪折线图 (Canvas) ----
+function renderMoodChart(moodData, selIdx) {
+  var canvas = document.getElementById('mood-chart-canvas');
+  if (!canvas) return;
+  var panel = canvas.parentElement;
+  var Wcss = Math.max(panel.offsetWidth - 40, 300), Hcss = 260;
+  canvas.style.width = Wcss + 'px'; canvas.style.height = Hcss + 'px';
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = Wcss * dpr; canvas.height = Hcss * dpr;
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr);
+  var W = Wcss, H = Hcss;
+  var padL = 38, padR = 20, padT = 18, padB = 36;
+  var pw = W - padL - padR, ph = H - padT - padB;
+
+  ctx.fillStyle = 'rgba(199,201,188,0.04)'; ctx.fillRect(0, 0, W, H);
+
+  if (!moodData || moodData.length < 1) {
+    ctx.fillStyle = '#9E988C'; ctx.font = '13px "Noto Serif SC", serif'; ctx.textAlign = 'center';
+    ctx.fillText('暂无足够数据绘制折线', W/2, H/2);
+    canvas._moodChartData = null; return;
+  }
+
+  // 水平参考线
+  for (var yi = 0; yi <= 4; yi++) {
+    var yv = yi / 4, gy = padT + ph * (1 - yv);
+    ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy);
+    ctx.strokeStyle = yv === 0.5 ? 'rgba(150,138,116,0.35)' : 'rgba(150,138,116,0.16)';
+    ctx.lineWidth = yv === 0.5 ? 0.6 : 0.4;
+    ctx.setLineDash(yv === 0.5 ? [] : [4, 6]); ctx.stroke();
+    ctx.fillStyle = '#9E988C'; ctx.font = '9px "Share Tech Mono", monospace'; ctx.textAlign = 'right';
+    ctx.fillText(yv.toFixed(1), padL - 6, gy + 3);
+  }
+  ctx.setLineDash([]);
+
+  // X 轴标签
+  var nDays = moodData.length;
+  var xStep = Math.max(1, Math.floor(nDays / 10));
+  ctx.fillStyle = '#9E988C'; ctx.font = '9px "Share Tech Mono", monospace'; ctx.textAlign = 'center';
+  for (var di = 0; di < nDays; di++) {
+    if (di % xStep !== 0 && di !== nDays - 1 && di !== selIdx) continue;
+    var dx = padL + (pw * di / Math.max(1, nDays - 1));
+    ctx.fillText(moodData[di].date.slice(5), dx, H - padB + 16);
+  }
+
+  // 折线
+  function drawLine(key, color, dash) {
+    ctx.beginPath(); var first = true;
+    for (var i = 0; i < nDays; i++) {
+      var val = key === 'v' ? moodData[i].avgV : moodData[i].avgA;
+      var dx = padL + (pw * i / Math.max(1, nDays - 1));
+      var dy = padT + ph * (1 - val);
+      if (first) { ctx.moveTo(dx, dy); first = false; } else ctx.lineTo(dx, dy);
+    }
+    ctx.strokeStyle = color; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if (dash) ctx.setLineDash([7, 5]);
+    ctx.shadowColor = color; ctx.shadowBlur = 5; ctx.stroke();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.setLineDash([]);
+  }
+  drawLine('v', '#C2982F', false);
+  drawLine('a', '#BE5A41', true);
+
+  // 数据点
+  for (var di = 0; di < nDays; di++) {
+    var dx = padL + (pw * di / Math.max(1, nDays - 1));
+    var dyV = padT + ph * (1 - moodData[di].avgV);
+    var dyA = padT + ph * (1 - moodData[di].avgA);
+    var isSel = (di === selIdx);
+    // valence dot
+    ctx.beginPath(); ctx.arc(dx, dyV, isSel ? 4.5 : 2.5, 0, Math.PI * 2); ctx.fillStyle = '#C2982F';
+    if (isSel) { ctx.shadowColor = '#C2982F'; ctx.shadowBlur = 8; } ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+    // arousal dot
+    ctx.beginPath(); ctx.arc(dx, dyA, isSel ? 4 : 2, 0, Math.PI * 2); ctx.fillStyle = '#BE5A41';
+    if (isSel) { ctx.shadowColor = '#BE5A41'; ctx.shadowBlur = 6; } ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+  }
+
+  // 选中日竖线
+  if (selIdx >= 0 && selIdx < nDays) {
+    var sx = padL + (pw * selIdx / Math.max(1, nDays - 1));
+    ctx.beginPath(); ctx.moveTo(sx, padT); ctx.lineTo(sx, H - padB);
+    ctx.strokeStyle = 'rgba(194,152,47,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  canvas._moodChartData = moodData;
+  canvas._moodChartPad = {padL: padL, padR: padR, padT: padT, padB: padB, pw: pw, ph: ph};
+}
+
+// ---- 按天卡片 (DOM) ----
+function renderMoodDays(moodData, expandedIdx) {
+  var container = document.getElementById('mood-days');
+  var countEl = document.getElementById('mood-days-count');
+  if (!moodData || !moodData.length) {
+    container.innerHTML = '<div class="mood-empty">记忆池里还没有带日期标记的记忆。<br>写一些记忆，它们会在这里浮现。</div>';
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+  if (countEl) countEl.textContent = moodData.length + ' 天 · ' + moodData.reduce(function(s, d) { return s + d.count; }, 0) + ' 条记忆';
+
+  var html = '';
+  for (var di = moodData.length - 1; di >= 0; di--) {
+    var day = moodData[di];
+    var parts = day.date.split('-');
+    var d = parts[2], m = parts[1];
+    var isExpanded = (di === expandedIdx);
+    // emotion band: chronological color gradient
+    var bandStops = [];
+    for (var si = 0; si < day.items.length; si++) {
+      var frac = si / Math.max(1, day.items.length - 1) * 100;
+      bandStops.push(valenceRGB(day.items[si].valence) + ' ' + frac + '%');
+    }
+    var bandStyle = 'background: linear-gradient(to right, ' + bandStops.join(', ') + ');';
+
+    html += '<div class="mood-day-card' + (isExpanded ? ' expanded' : '') + '" data-day-idx="' + di + '" onclick="moodToggleDay(' + di + ', event)">';
+    html += '<div class="mood-day-header-row">';
+    html += '<span class="mood-day-date">' + parseInt(d) + '</span>';
+    html += '<span class="mood-day-mo">' + parseInt(m) + '月</span>';
+    html += '<span class="mood-day-wk">' + day.weekday + '</span>';
+    html += '<div class="mood-emotion-band" style="' + bandStyle + '"></div>';
+    html += '<span class="mood-day-count">' + day.count + ' 条</span>';
+    html += '<span class="mood-day-vrange">V' + day.vRange[0].toFixed(1) + '~' + day.vRange[1].toFixed(1) + '</span>';
+    html += '</div>';
+    // expanded rows
+    html += '<div class="mood-day-expand">';
+    for (var ii = 0; ii < day.items.length; ii++) {
+      var it = day.items[ii];
+      html += '<div class="mood-memory-row" onclick="event.stopPropagation();openBucketDetail(\'' + esc(it.id) + '\')" title="点击查看详情">';
+      html += '<span class="mood-memory-time">' + it.time + '</span>';
+      html += '<span class="mood-memory-icon">' + feelFace(it.valence, it.arousal) + '</span>';
+      html += '<span class="mood-memory-title">' + esc(it.name) + '</span>';
+      if (it.summary) html += '<span class="mood-memory-sep">·</span><span class="mood-memory-summary">' + esc(it.summary) + '</span>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function moodToggleDay(idx, event) {
+  if (event) event.stopPropagation();
+  if (_moodState.expandedDayIdx === idx) {
+    _moodState.expandedDayIdx = -1; _moodState.selectedDayIdx = -1;
+  } else {
+    _moodState.expandedDayIdx = idx; _moodState.selectedDayIdx = idx;
+  }
+  _renderMoodPanels();
+}
+
+// ---- Canvas 交互：hover 提示 + click 选中 ----
+function _setupMoodCanvasEvents() {
+  var compassCanvas = document.getElementById('mood-compass-canvas');
+  var chartCanvas = document.getElementById('mood-chart-canvas');
+  var compassTip = document.getElementById('mood-compass-tooltip');
+  var chartTip = document.getElementById('mood-chart-tooltip');
+
+  function _panelRelPos(canvas, e) {
+    var panel = canvas.parentElement;
+    var pr = panel.getBoundingClientRect();
+    return {x: e.clientX - pr.left, y: e.clientY - pr.top};
+  }
+
+  if (compassCanvas && !compassCanvas._moodEventsSet) {
+    compassCanvas._moodEventsSet = true;
+    compassCanvas.addEventListener('mousemove', function(e) {
+      var dots = compassCanvas._moodDots || [];
+      var rel = _panelRelPos(compassCanvas, e);
+      var found = null;
+      for (var i = 0; i < dots.length; i++) {
+        var dx = rel.x - dots[i].x, dy = rel.y - dots[i].y;
+        if (Math.sqrt(dx*dx + dy*dy) < dots[i].r + 5) { found = dots[i]; break; }
+      }
+      if (found) {
+        compassTip.style.display = '';
+        compassTip.style.left = (found.x + 14) + 'px';
+        compassTip.style.top = (found.y - 12) + 'px';
+        compassTip.innerHTML = '<span class="tt-time">' + found.date + ' ' + found.item.time + '</span><br><span class="tt-name">' + esc(found.item.name) + '</span><br>V' + found.item.valence.toFixed(2) + ' / A' + found.item.arousal.toFixed(2);
+        _moodState.compassHover = found;
+      } else {
+        compassTip.style.display = 'none'; _moodState.compassHover = null;
+      }
+    });
+    compassCanvas.addEventListener('mouseleave', function() { compassTip.style.display = 'none'; _moodState.compassHover = null; });
+    compassCanvas.addEventListener('click', function() {
+      if (_moodState.compassHover) {
+        _moodState.selectedDayIdx = _moodState.compassHover.dayIdx;
+        _moodState.expandedDayIdx = _moodState.compassHover.dayIdx;
+        _renderMoodPanels();
+      }
+    });
+  }
+
+  if (chartCanvas && !chartCanvas._moodEventsSet) {
+    chartCanvas._moodEventsSet = true;
+    chartCanvas.addEventListener('mousemove', function(e) {
+      var data = chartCanvas._moodChartData, pad = chartCanvas._moodChartPad;
+      if (!data || !pad) return;
+      var pr = chartCanvas.parentElement.getBoundingClientRect();
+      var relX = e.clientX - pr.left, relY = e.clientY - pr.top;
+      var foundIdx = -1, minDist = 20;
+      for (var i = 0; i < data.length; i++) {
+        var dx = pad.padL + (pad.pw * i / Math.max(1, data.length - 1));
+        if (Math.abs(relX - dx) < minDist) { foundIdx = i; minDist = Math.abs(relX - dx); }
+      }
+      if (foundIdx >= 0 && minDist < 14) {
+        var day = data[foundIdx];
+        var tipX = pad.padL + (pad.pw * foundIdx / Math.max(1, data.length - 1)) - 70;
+        chartTip.style.display = '';
+        chartTip.style.left = Math.max(4, tipX) + 'px';
+        chartTip.style.top = Math.max(4, relY - 56) + 'px';
+        chartTip.innerHTML = '<span class="tt-time">' + day.date + ' ' + day.weekday + '</span><br>' + day.count + ' 条记忆<br>V avg ' + day.avgV.toFixed(2) + ' / A avg ' + day.avgA.toFixed(2);
+        _moodState.chartHover = foundIdx;
+      } else {
+        chartTip.style.display = 'none'; _moodState.chartHover = null;
+      }
+    });
+    chartCanvas.addEventListener('mouseleave', function() { chartTip.style.display = 'none'; _moodState.chartHover = null; });
+    chartCanvas.addEventListener('click', function() {
+      if (_moodState.chartHover != null) {
+        _moodState.selectedDayIdx = _moodState.chartHover;
+        _moodState.expandedDayIdx = _moodState.chartHover;
+        _renderMoodPanels();
+      }
+    });
+  }
+}
+
+function _renderMoodPanels() {
+  var data = _moodState.moodData;
+  renderMoodCompass(data, _moodState.selectedDayIdx);
+  renderMoodChart(data, _moodState.selectedDayIdx);
+  renderMoodDays(data, _moodState.expandedDayIdx);
+  // 重新绑定 canvas 事件（canvas 被 resize 后需要重新 setup；_moodEventsSet guard 保证只一次）
+  _setupMoodCanvasEvents();
+}
+
+// ---- 主渲染入口 ----
+function renderMood() {
+  var data = buildMoodData();
+  _moodState.moodData = data;
+  _moodState.selectedDayIdx = data.length > 0 ? data.length - 1 : -1;
+  _moodState.expandedDayIdx = -1;
+  _moodState.compassHover = null; _moodState.chartHover = null;
+
+  var statsEl = document.getElementById('mood-stats');
+  var daysEl = document.getElementById('mood-days');
+  var countEl = document.getElementById('mood-days-count');
+
+  if (!data || !data.length) {
+    if (statsEl) statsEl.textContent = '';
+    if (daysEl) daysEl.innerHTML = '<div class="mood-empty">记忆池里还没有带日期标记的记忆。<br>写一些记忆，它们会在这里浮现。</div>';
+    if (countEl) countEl.textContent = '';
+    var cc = document.getElementById('mood-compass-canvas'), ch = document.getElementById('mood-chart-canvas');
+    if (cc) { var cctx = cc.getContext('2d'); cctx.clearRect(0, 0, cc.width, cc.height); }
+    if (ch) { var chctx = ch.getContext('2d'); chctx.clearRect(0, 0, ch.width, ch.height); }
+    return;
+  }
+  if (statsEl) {
+    var totalItems = data.reduce(function(s, d) { return s + d.count; }, 0);
+    var avgVAll = (data.reduce(function(s, d) { return s + d.avgV; }, 0) / data.length).toFixed(2);
+    var avgAAll = (data.reduce(function(s, d) { return s + d.avgA; }, 0) / data.length).toFixed(2);
+    statsEl.innerHTML = '<span><b>' + data.length + '</b> 天</span><span><b>' + totalItems + '</b> 条记忆</span><span>日均 V<b>' + avgVAll + '</b> A<b>' + avgAAll + '</b></span>';
+  }
+  _renderMoodPanels();
 }
 
 // 打开桶详情 — 切回 list 并打开 detail panel
