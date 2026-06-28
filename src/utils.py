@@ -30,7 +30,7 @@ import uuid
 import yaml
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -500,7 +500,7 @@ def count_tokens_approx(text: str) -> int:
 
 def now_iso() -> str:
     """
-    Return current time as ISO format string.
-    返回当前时间的 ISO 格式字符串。
+    Return current time as ISO format string (UTC with timezone).
+    返回当前 UTC 时间的 ISO 格式字符串（带时区标记）。
     """
-    return datetime.now().isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
