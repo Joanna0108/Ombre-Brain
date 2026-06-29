@@ -117,6 +117,13 @@ def load_config(config_path: Optional[str] = None) -> dict:
             "max_tokens": 4096,
             "temperature": 0.1,
         },
+        "replay": {
+            "model": "deepseek-chat",
+            "base_url": "https://api.deepseek.com/v1",
+            "api_key": "",
+            "max_tokens": 4096,
+            "temperature": 0.7,
+        },
         "decay": {
             "lambda": 0.05,
             "threshold": 0.3,
@@ -175,6 +182,11 @@ def load_config(config_path: Optional[str] = None) -> dict:
     _apply_env_override(config, "OMBRE_EMBED_BASE_URL", "embedding", "base_url")
     _apply_env_override(config, "OMBRE_EMBED_MODEL", "embedding", "model")
     _apply_env_override(config, "OMBRE_EMBED_FORMAT", "embedding", "api_format")
+
+    # Replay 组（人生电影旁白）—— 写到 config["replay"][*]
+    _apply_env_override(config, "OMBRE_REPLAY_API_KEY", "replay", "api_key")
+    _apply_env_override(config, "OMBRE_REPLAY_BASE_URL", "replay", "base_url")
+    _apply_env_override(config, "OMBRE_REPLAY_MODEL", "replay", "model")
 
     # 顶层运行时
     _apply_env_override(config, "OMBRE_TRANSPORT", "transport")

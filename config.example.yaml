@@ -63,6 +63,18 @@ dehydration:
   max_tokens: 1024
   temperature: 0.1
 
+# --- Replay / 人生电影旁白配置 ---
+# Uses a cheap LLM to generate cinematic narration for 🎬 Replay.
+# 用廉价 LLM 给 🎬 Replay 生成电影式旁白。
+# Supports any OpenAI-compatible API.
+# 支持所有 OpenAI 兼容 API。
+replay:
+  model: "deepseek-chat"            # DeepSeek ¥1/百万token; Gemini flash-lite also works
+  base_url: "https://api.deepseek.com/v1"
+  # api_key: ""                     # ⚠️ Use env var OMBRE_REPLAY_API_KEY instead / 请使用环境变量
+  max_tokens: 4096
+  temperature: 0.7                  # 比脱水高一点，让旁白更有创意
+
 # --- Decay parameters / 记忆衰减参数 ---
 # Simulates Ebbinghaus forgetting curve, auto-archives inactive memories
 # 模拟艾宾浩斯遗忘曲线，自动归档不活跃的记忆

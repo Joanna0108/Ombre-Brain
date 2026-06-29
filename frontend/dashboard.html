@@ -1881,6 +1881,120 @@
     .mood-day-header-row { flex-wrap: wrap; gap: 8px; }
     .mood-emotion-band { flex: 1 0 100%; order: 10; }
   }
+
+  /* ============================================================
+     人生电影 / Life Replay — 电影纪录片风格，暗色主题
+     ============================================================ */
+  #replay-view.content { padding: 0; background: #1a1815; }
+  .replay-root { max-width: 780px; margin: 0 auto; padding: 32px 24px 60px; min-height: 100vh; }
+
+  /* header controls */
+  .replay-header { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+  .replay-heading { margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; font-style: italic; color: #e8e4dc; }
+  .replay-sub { font-size: 11px; font-family: 'Share Tech Mono', monospace; color: #8a867c; letter-spacing: 0.04em; }
+  .replay-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .replay-label { font-size: 11px; font-family: 'Share Tech Mono', monospace; color: #8a867c; }
+  .replay-date-input {
+    background: #2a2722; border: 1px solid #3e3a34; color: #e8e4dc;
+    padding: 6px 10px; border-radius: 6px; font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    color-scheme: dark;
+  }
+  .replay-gen-btn {
+    background: var(--accent); color: #1a1815; border: none; padding: 8px 18px;
+    border-radius: 8px; font-family: 'Share Tech Mono', monospace; font-size: 12px;
+    font-weight: 600; cursor: pointer; transition: all .15s ease; letter-spacing: 0.04em;
+  }
+  .replay-gen-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+
+  /* loading */
+  .replay-loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px 0; color: #8a867c; font-family: 'Share Tech Mono', monospace; font-size: 12px; }
+  .replay-loading-spinner { width: 32px; height: 32px; border: 2px solid #3e3a34; border-top-color: var(--accent); border-radius: 50%; animation: replay-spin 0.8s linear infinite; }
+  @keyframes replay-spin { to { transform: rotate(360deg); } }
+  .replay-error { padding: 24px; background: rgba(190,90,65,0.12); border: 1px solid rgba(190,90,65,0.3); border-radius: 12px; color: #d49585; font-size: 13px; }
+
+  /* cover card */
+  .replay-cover {
+    position: relative; border-radius: 20px; overflow: hidden;
+    min-height: 320px; display: flex; align-items: flex-end;
+    background: linear-gradient(160deg, #2a2722 0%, #1a1815 40%, #1a1815 70%, #2a2218 100%);
+    margin-bottom: 32px; border: 1px solid #3e3a34;
+  }
+  .replay-cover-overlay {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(194,152,47,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 80%, rgba(190,90,65,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .replay-cover-content { position: relative; z-index: 1; padding: 40px 36px; width: 100%; }
+  .replay-cover-label {
+    font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 0.25em;
+    color: var(--accent); margin-bottom: 12px; text-transform: uppercase;
+  }
+  .replay-cover-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; font-style: italic;
+    color: #e8e4dc; margin: 0 0 8px; line-height: 1.2;
+  }
+  .replay-cover-sub { font-family: 'Noto Serif SC', serif; font-size: 15px; color: #a09a8e; margin: 0 0 6px; }
+  .replay-cover-meta { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #6e6a60; margin: 0; }
+
+  /* playback bar */
+  .replay-playbar {
+    display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+    background: #231f1a; border-radius: 14px; margin-bottom: 28px;
+    border: 1px solid #3e3a34; position: sticky; top: 80px; z-index: 10;
+  }
+  .replay-pb-btn {
+    background: none; border: 1px solid #3e3a34; color: #a09a8e;
+    width: 36px; height: 36px; border-radius: 10px; cursor: pointer;
+    font-size: 15px; display: flex; align-items: center; justify-content: center;
+    transition: all .12s ease;
+  }
+  .replay-pb-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .replay-pb-play { width: 44px; height: 44px; font-size: 18px; background: var(--accent); color: #1a1815; border-color: var(--accent); }
+  .replay-pb-play:hover { background: var(--accent-light); }
+  .replay-pb-play.playing { background: #4a3a28; border-color: #6e5a3a; }
+  .replay-pb-speed { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #6e6a60; margin-left: auto; display: flex; align-items: center; gap: 4px; }
+  .replay-pb-speed select {
+    background: #2a2722; border: 1px solid #3e3a34; color: #a09a8e;
+    padding: 3px 6px; border-radius: 4px; font-family: inherit; font-size: 10px;
+  }
+  .replay-pb-scene { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #6e6a60; margin-left: 8px; }
+
+  /* scene cards */
+  .replay-scenes { display: flex; flex-direction: column; gap: 0; }
+  .replay-scene {
+    padding: 24px 0; border-bottom: 1px solid #2a2722;
+    opacity: 0.35; transition: opacity 0.6s ease;
+  }
+  .replay-scene.active { opacity: 1; }
+  .replay-scene-month {
+    font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 0.15em;
+    color: var(--accent); margin-bottom: 6px; text-transform: uppercase;
+  }
+  .replay-scene-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; font-style: italic;
+    color: #e8e4dc; margin: 0 0 10px;
+  }
+  .replay-scene-narration {
+    font-family: 'Noto Serif SC', serif; font-size: 15px; line-height: 2;
+    color: #b8b2a6; max-width: 640px;
+  }
+
+  /* end card */
+  .replay-end { text-align: center; padding: 48px 0 24px; }
+  .replay-end-line { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, var(--accent), transparent); margin: 0 auto 16px; }
+  .replay-end-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: #8a867c; margin-bottom: 6px; }
+  .replay-end-sub { font-family: 'Noto Serif SC', serif; font-size: 12px; color: #5e5a52; }
+
+  @media (max-width: 768px) {
+    .replay-root { padding: 20px 12px 40px; }
+    .replay-cover { min-height: 240px; }
+    .replay-cover-title { font-size: 26px; }
+    .replay-cover-content { padding: 28px 20px; }
+    .replay-header { flex-direction: column; align-items: flex-start; }
+  }
+
 </style>
 </head>
 <body>
@@ -1940,6 +2054,7 @@
   <div class="tab" data-tab="calendar"><span>日历</span><span class="tab-en">Calendar</span></div>
   <div class="tab" data-tab="timeline"><span>时间线</span><span class="tab-en">Timeline</span></div>
   <div class="tab" data-tab="mood"><span>情绪</span><span class="tab-en">Mood</span></div>
+  <div class="tab" data-tab="replay"><span>人生电影</span><span class="tab-en">Replay</span></div>
   <div class="tab" data-tab="tools"><span>工具箱</span><span class="tab-en">Toolbox</span></div>
   <div class="tab" data-tab="plan"><span>计划</span><span class="tab-en">Plans</span></div>
   <div class="tab" data-tab="letters"><span>信</span><span class="tab-en">Letters</span></div>
@@ -3097,6 +3212,69 @@
   </div>
 </div>
 
+<!-- ====== Life Replay View / 人生电影 ====== -->
+<div class="content" id="replay-view" style="display:none">
+  <div class="replay-root">
+    <!-- Controls -->
+    <div class="replay-header">
+      <div class="replay-title-row">
+        <h3 class="replay-heading">🎬 人生电影</h3>
+        <span class="replay-sub">Life Replay — 记忆纪录片</span>
+      </div>
+      <div class="replay-controls">
+        <label class="replay-label">从</label>
+        <input type="month" id="replay-start" class="replay-date-input" />
+        <label class="replay-label">到</label>
+        <input type="month" id="replay-end" class="replay-date-input" />
+        <button class="replay-gen-btn" onclick="generateReplay()">生成</button>
+      </div>
+    </div>
+    <!-- Loading -->
+    <div class="replay-loading" id="replay-loading" style="display:none;">
+      <div class="replay-loading-spinner"></div>
+      <span>正在剪辑你的人生纪录片…</span>
+    </div>
+    <!-- Error -->
+    <div class="replay-error" id="replay-error" style="display:none;"></div>
+    <!-- Result -->
+    <div id="replay-result" style="display:none;">
+      <!-- Cover -->
+      <div class="replay-cover" id="replay-cover">
+        <div class="replay-cover-overlay"></div>
+        <div class="replay-cover-content">
+          <div class="replay-cover-label">LIFE REPLAY</div>
+          <h1 class="replay-cover-title" id="replay-title"></h1>
+          <p class="replay-cover-sub" id="replay-subtitle"></p>
+          <p class="replay-cover-meta" id="replay-meta"></p>
+        </div>
+      </div>
+      <!-- Playback bar -->
+      <div class="replay-playbar" id="replay-playbar" style="display:none;">
+        <button class="replay-pb-btn" onclick="replaySkip(-1)" title="上一幕">⏮</button>
+        <button class="replay-pb-btn replay-pb-play" id="replay-play-btn" onclick="toggleReplayPlay()" title="播放/暂停">▶</button>
+        <button class="replay-pb-btn" onclick="replaySkip(1)" title="下一幕">⏭</button>
+        <span class="replay-pb-speed">
+          速度
+          <select id="replay-speed" onchange="replaySetSpeed(this.value)">
+            <option value="4000">1×</option>
+            <option value="2000">2×</option>
+            <option value="1000" selected>3×</option>
+          </select>
+        </span>
+        <span class="replay-pb-scene" id="replay-scene-indicator">—</span>
+      </div>
+      <!-- Scenes -->
+      <div class="replay-scenes" id="replay-scenes"></div>
+      <!-- End -->
+      <div class="replay-end" id="replay-end" style="display:none;">
+        <div class="replay-end-line"></div>
+        <div class="replay-end-text">— FIN —</div>
+        <div class="replay-end-sub">只记录真实发生过的。不编造，不表演。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Onboarding modal (iter 1.6 §8): 仅当 env+config 都没有任何 key 时弹出 -->
 <div id="onboarding-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;">
   <div style="background:var(--surface-solid);max-width:520px;width:92%;padding:32px 28px;border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.25);">
@@ -3969,6 +4147,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('calendar-view').style.display = target === 'calendar' ? '' : 'none';
     document.getElementById('timeline-view').style.display = target === 'timeline' ? '' : 'none';
     document.getElementById('mood-view').style.display = target === 'mood' ? '' : 'none';
+    document.getElementById('replay-view').style.display = target === 'replay' ? '' : 'none';
     if (target !== 'network' && _netRAF) { cancelAnimationFrame(_netRAF); _netRAF = null; }
     if (target === 'network') loadNetwork();
     if (target === 'tools') loadToolsPanel();
@@ -3997,6 +4176,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     if (target === 'calendar') renderCalendar();
     if (target === 'timeline') renderTimeline();
     if (target === 'mood') renderMood();
+    if (target === 'replay') initReplayView();
   });
 });
 
@@ -8312,6 +8492,150 @@ function renderMood() {
     statsEl.innerHTML = '<span><b>' + data.length + '</b> 天</span><span><b>' + totalItems + '</b> 条记忆</span><span>日均 V<b>' + avgVAll + '</b> A<b>' + avgAAll + '</b></span>';
   }
   _renderMoodPanels();
+}
+
+// ============================================================
+// 人生电影 / Life Replay — 电影纪录片生成器
+// ============================================================
+
+var _replayData = null;
+var _replayTimer = null;
+var _replayIdx = 0;
+
+function initReplayView() {
+  // 默认时间范围设为演示数据的日期（6月）
+  var now = new Date();
+  var y = now.getFullYear();
+  document.getElementById('replay-start').value = y + '-06';
+  document.getElementById('replay-end').value = y + '-07';
+  // 如果之前有结果，恢复显示
+  if (_replayData) {
+    showReplayResult(_replayData);
+  } else {
+    document.getElementById('replay-result').style.display = 'none';
+    document.getElementById('replay-loading').style.display = 'none';
+    document.getElementById('replay-error').style.display = 'none';
+  }
+}
+
+async function generateReplay() {
+  var start = document.getElementById('replay-start').value;
+  var end = document.getElementById('replay-end').value;
+  if (!start || !end) { alert('请选择开始和结束月份'); return; }
+  // month inputs give YYYY-MM; convert to full dates
+  start += '-01'; end += '-31';
+
+  stopReplayPlay();
+  document.getElementById('replay-result').style.display = 'none';
+  document.getElementById('replay-error').style.display = 'none';
+  document.getElementById('replay-loading').style.display = 'flex';
+
+  try {
+    var resp = await authFetch('/api/replay?start=' + encodeURIComponent(start) + '&end=' + encodeURIComponent(end));
+    if (!resp) { document.getElementById('replay-loading').style.display = 'none'; return; }
+    var data = await readJsonSafe(resp);
+    document.getElementById('replay-loading').style.display = 'none';
+    if (!resp.ok) {
+      document.getElementById('replay-error').style.display = '';
+      document.getElementById('replay-error').textContent = data.error || '生成失败';
+      return;
+    }
+    _replayData = data;
+    showReplayResult(data);
+  } catch (e) {
+    document.getElementById('replay-loading').style.display = 'none';
+    document.getElementById('replay-error').style.display = '';
+    document.getElementById('replay-error').textContent = '生成失败: ' + e.message;
+  }
+}
+
+function showReplayResult(data) {
+  document.getElementById('replay-result').style.display = '';
+  document.getElementById('replay-title').textContent = data.title || '记忆纪录片';
+  document.getElementById('replay-subtitle').textContent = data.subtitle || '';
+  document.getElementById('replay-meta').textContent = (data.start || '') + ' — ' + (data.end || '') + ' · ' + (data.memory_count || 0) + ' 条记忆';
+
+  var scenes = data.scenes || [];
+  var scenesEl = document.getElementById('replay-scenes');
+  var html = '';
+  for (var i = 0; i < scenes.length; i++) {
+    var s = scenes[i];
+    html += '<div class="replay-scene" id="replay-scene-' + i + '">';
+    html += '<div class="replay-scene-month">' + esc(s.month || '') + '</div>';
+    html += '<div class="replay-scene-title">' + esc(s.title || '') + '</div>';
+    html += '<div class="replay-scene-narration">' + esc(s.narration || '') + '</div>';
+    html += '</div>';
+  }
+  scenesEl.innerHTML = html;
+
+  if (scenes.length > 0) {
+    document.getElementById('replay-playbar').style.display = 'flex';
+  }
+  document.getElementById('replay-end').style.display = scenes.length > 0 ? '' : 'none';
+
+  // 重置播放
+  _replayIdx = 0;
+  updateReplaySceneHighlight();
+}
+
+function updateReplaySceneHighlight() {
+  var scenes = document.querySelectorAll('.replay-scene');
+  for (var i = 0; i < scenes.length; i++) {
+    scenes[i].classList.toggle('active', i === _replayIdx);
+  }
+  document.getElementById('replay-scene-indicator').textContent =
+    (_replayIdx + 1) + ' / ' + scenes.length;
+  // 滚动到当前 scene
+  var el = document.getElementById('replay-scene-' + _replayIdx);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function toggleReplayPlay() {
+  if (_replayTimer) {
+    stopReplayPlay();
+    return;
+  }
+  startReplayPlay();
+}
+
+function startReplayPlay() {
+  var btn = document.getElementById('replay-play-btn');
+  btn.textContent = '⏸';
+  btn.classList.add('playing');
+  var speed = parseInt(document.getElementById('replay-speed').value) || 3000;
+
+  function advance() {
+    var scenes = document.querySelectorAll('.replay-scene');
+    if (_replayIdx >= scenes.length - 1) {
+      stopReplayPlay();
+      return;
+    }
+    _replayIdx++;
+    updateReplaySceneHighlight();
+    _replayTimer = setTimeout(advance, speed);
+  }
+  _replayTimer = setTimeout(advance, speed);
+}
+
+function stopReplayPlay() {
+  if (_replayTimer) { clearTimeout(_replayTimer); _replayTimer = null; }
+  var btn = document.getElementById('replay-play-btn');
+  if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+}
+
+function replaySkip(dir) {
+  stopReplayPlay();
+  var scenes = document.querySelectorAll('.replay-scene');
+  _replayIdx = Math.max(0, Math.min(scenes.length - 1, _replayIdx + dir));
+  updateReplaySceneHighlight();
+}
+
+function replaySetSpeed(val) {
+  // 如果正在播放，重启以适应新速度
+  if (_replayTimer) {
+    stopReplayPlay();
+    startReplayPlay();
+  }
 }
 
 // 打开桶详情 — 切回 list 并打开 detail panel
