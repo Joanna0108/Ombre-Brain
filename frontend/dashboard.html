@@ -2906,6 +2906,13 @@
       </div>
 
       <div style="margin-bottom:18px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🎬 Replay 人生电影旁白（廉价 LLM）</div>
+        <div class="form-row"><label>API Key</label><input type="password" id="env-replay-key" placeholder="留空 = 不修改" autocomplete="new-password" style="font-family:monospace;" /></div>
+        <div class="form-row"><label>Base URL</label><input type="text" id="env-replay-base" placeholder="例：https://api.deepseek.com/v1" style="font-family:monospace;" /></div>
+        <div class="form-row"><label>Model</label><input type="text" id="env-replay-model" placeholder="例：deepseek-chat" style="font-family:monospace;" /></div>
+      </div>
+
+      <div style="margin-bottom:18px;">
         <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Webhook</div>
         <div class="form-row"><label>Hook URL</label><input type="text" id="env-hook-url" placeholder="留空 = 关闭推送" style="font-family:monospace;" /></div>
         <div class="form-row">
@@ -6208,6 +6215,13 @@ async function refreshEnvConfig() {
     }
     el = document.getElementById('env-embed-model');
     if (el) el.value = (f['OMBRE_EMBED_MODEL'] || {}).value || '';
+    // Replay
+    el = document.getElementById('env-replay-key');
+    if (el) { el.placeholder = f['OMBRE_REPLAY_API_KEY'] && f['OMBRE_REPLAY_API_KEY'].is_set ? '当前：' + (f['OMBRE_REPLAY_API_KEY'].value || '***') + '（留空 = 不修改）' : '未设置'; el.value = ''; }
+    el = document.getElementById('env-replay-base');
+    if (el) el.value = (f['OMBRE_REPLAY_BASE_URL'] || {}).value || '';
+    el = document.getElementById('env-replay-model');
+    if (el) el.value = (f['OMBRE_REPLAY_MODEL'] || {}).value || '';
     // Webhook
     el = document.getElementById('env-hook-url');
     if (el) el.value = (f['OMBRE_HOOK_URL'] || {}).value || '';
@@ -6242,6 +6256,9 @@ async function refreshEnvShadowWarning() {
     OMBRE_EMBED_BASE_URL: '向量化 Base URL',
     OMBRE_EMBED_MODEL: '向量化 Model',
     OMBRE_EMBED_API_KEY: '向量化 API Key',
+    OMBRE_REPLAY_BASE_URL: 'Replay Base URL',
+    OMBRE_REPLAY_MODEL: 'Replay Model',
+    OMBRE_REPLAY_API_KEY: 'Replay API Key',
   };
   try {
     var r = await authFetch('/api/env-vars');
@@ -6283,6 +6300,13 @@ async function saveEnvConfig() {
   if (ebase !== undefined) updates['OMBRE_EMBED_BASE_URL'] = ebase;
   var emodel = document.getElementById('env-embed-model').value.trim();
   if (emodel !== undefined) updates['OMBRE_EMBED_MODEL'] = emodel;
+  // Replay
+  var rkey = document.getElementById('env-replay-key').value.trim();
+  if (rkey) updates['OMBRE_REPLAY_API_KEY'] = rkey;
+  var rbase = document.getElementById('env-replay-base').value.trim();
+  if (rbase !== undefined) updates['OMBRE_REPLAY_BASE_URL'] = rbase;
+  var rmodel = document.getElementById('env-replay-model').value.trim();
+  if (rmodel !== undefined) updates['OMBRE_REPLAY_MODEL'] = rmodel;
   // Webhook
   var hookUrl = document.getElementById('env-hook-url').value.trim();
   updates['OMBRE_HOOK_URL'] = hookUrl;

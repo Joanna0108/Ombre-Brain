@@ -72,6 +72,10 @@ def register(mcp) -> None:
             {"name": "OMBRE_EMBED_API_KEY", "group": "embed", "label": "向量化 API Key", "sensitive": True, **_masked("OMBRE_EMBED_API_KEY")},
             {"name": "OMBRE_EMBED_BASE_URL", "group": "embed", "label": "向量化 Base URL", "sensitive": False, **_plain("OMBRE_EMBED_BASE_URL")},
             {"name": "OMBRE_EMBED_MODEL", "group": "embed", "label": "向量化模型", "sensitive": False, **_plain("OMBRE_EMBED_MODEL")},
+            # Replay / 人生电影
+            {"name": "OMBRE_REPLAY_API_KEY", "group": "replay", "label": "Replay API Key", "sensitive": True, **_masked("OMBRE_REPLAY_API_KEY")},
+            {"name": "OMBRE_REPLAY_BASE_URL", "group": "replay", "label": "Replay Base URL", "sensitive": False, **_plain("OMBRE_REPLAY_BASE_URL")},
+            {"name": "OMBRE_REPLAY_MODEL", "group": "replay", "label": "Replay 模型", "sensitive": False, **_plain("OMBRE_REPLAY_MODEL")},
             # 服务配置组
             {"name": "OMBRE_TRANSPORT", "group": "system", "label": "传输模式", "sensitive": False, **_plain("OMBRE_TRANSPORT")},
             {"name": "OMBRE_PORT", "group": "system", "label": "服务端口", "sensitive": False, **_plain("OMBRE_PORT")},
@@ -472,6 +476,10 @@ def register(mcp) -> None:
         "OMBRE_EMBED_BASE_URL":    {"group": "embed",    "sensitive": False, "in_memory": ("embedding", "base_url")},
         "OMBRE_EMBED_MODEL":       {"group": "embed",    "sensitive": False, "in_memory": ("embedding", "model")},
         "OMBRE_EMBED_FORMAT":      {"group": "embed",    "sensitive": False, "in_memory": ("embedding", "api_format")},
+        # Replay / 人生电影旁白
+        "OMBRE_REPLAY_API_KEY":     {"group": "replay",   "sensitive": True,  "in_memory": ("replay", "api_key")},
+        "OMBRE_REPLAY_BASE_URL":    {"group": "replay",   "sensitive": False, "in_memory": ("replay", "base_url")},
+        "OMBRE_REPLAY_MODEL":       {"group": "replay",   "sensitive": False, "in_memory": ("replay", "model")},
         # Webhook
         "OMBRE_HOOK_URL":          {"group": "webhook",  "sensitive": False, "in_memory": None},
         "OMBRE_HOOK_SKIP":         {"group": "webhook",  "sensitive": False, "in_memory": None},
@@ -480,6 +488,7 @@ def register(mcp) -> None:
     _ENV_CONFIG_NOTE = {
         "compress": "改完即时生效（进程内 sh.config 已更新），同时写 config.yaml 持久化（重启后仍有效）。",
         "embed": "API key / base_url / model 立即更新进程内 config；backend 切换请用「切换 / 重算所有 embedding…」按钮。",
+        "replay": "改完即时生效，下次生成 🎬 Replay 时使用新配置。",
         "webhook": "改完下次 breath/dream 触发时即生效，无需重启。",
     }
 
