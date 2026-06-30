@@ -96,10 +96,22 @@ function SettingsApp() {
       if (r[9]) setBucketsData(Array.isArray(r[9]) ? r[9] : []); if (r[10]) setLocalEmb(r[10]);
       // Init form defaults from config
       if (r[1]) {
-        var d = r[1].dehydration || {};
+        var dd = r[1].dehydration || {};
+        // Detect matching preset
+        var dm = dd.model || '', du = dd.base_url || '';
+        var dPreset = 'custom';
+        if (dm === 'deepseek-chat' && du.indexOf('deepseek') >= 0) dPreset = 'deepseek';
+        else if (dm === 'gemini-2.5-flash-lite') dPreset = 'gemini';
+        else if (dm === 'deepseek-ai/DeepSeek-V3' && du.indexOf('siliconflow') >= 0) dPreset = 'siliconflow';
+        else if (dm.indexOf('claude') >= 0) dPreset = 'anthropic';
+        var em = (r[1].embedding || {}).model || '';
+        var ePreset = 'custom';
+        if (em === 'gemini-embedding-001') ePreset = 'gemini';
+        else if (em === 'BAAI/bge-m3' && ((r[1].embedding || {}).backend || '') === 'ollama') ePreset = 'ollama';
+        else if (em === 'BAAI/bge-m3') ePreset = 'siliconflow';
         setForm(Object.assign({}, form, {
-          dehyModel: d.model || '', dehyUrl: d.base_url || '', dehyTokens: d.max_tokens || 1024, dehyTemp: d.temperature || 0.1,
-          embModel: (r[1].embedding || {}).model || '', embUrl: (r[1].embedding || {}).base_url || '', mergeThresh: r[1].merge_threshold || 75,
+          dehyPreset: dPreset, dehyModel: dm, dehyUrl: du, dehyTokens: dd.max_tokens || 1024, dehyTemp: dd.temperature || 0.1,
+          embPreset: ePreset, embModel: em, embUrl: (r[1].embedding || {}).base_url || '', mergeThresh: r[1].merge_threshold || 75,
           breathResults: (r[1].surfacing || {}).breath_max_results || 20, breathTokens: (r[1].surfacing || {}).breath_max_tokens || 10000,
         }));
       }
