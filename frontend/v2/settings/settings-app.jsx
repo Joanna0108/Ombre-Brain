@@ -51,7 +51,8 @@ var EMB_PRESETS = [
 ];
 var TABS = ['⓪版本','①我','②服务','③引擎','④桶行为','⑥MCP','⑦GitHub','⑧危险区'];
 
-function SettingsApp() {
+function SettingsApp(opts) {
+  var embedded = opts && opts.embedded;
   var _s = useSt(null), status = _s[0], setStatus = _s[1];
   var _c = useSt(null), config = _c[0], setConfig = _c[1];
   var _t = useSt(null), tunnel = _t[0], setTunnel = _t[1];
@@ -118,11 +119,14 @@ function SettingsApp() {
     }).catch(function() {}).finally(function() { setLoading(false); });
   }, []);
 
-  if (loading) return ce('div', null,
-    ce(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
-    ce(window.SharedNav, { active: 'settings' }),
-    ce('div', { className: 'st-loading' }, '加载设置…'),
-  );
+  if (loading) {
+    if (embedded) return ce('div', { className: 'st-loading' }, '加载设置…');
+    return ce('div', null,
+      ce(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
+      ce(window.SharedNav, { active: 'settings' }),
+      ce('div', { className: 'st-loading' }, '加载设置…'),
+    );
+  }
 
   var panel = null;
 
@@ -367,19 +371,25 @@ function SettingsApp() {
     );
   }
 
+  var content = ce('div', { className: 'st-page' },
+    ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置')),
+    msg ? ce('div', { style: { textAlign: 'center', fontSize: 12, color: 'var(--accent)', marginBottom: 8 } }, msg) : null,
+    ce('div', { className: 'st-tabs' },
+      TABS.map(function(t) { return ce('button', { key: t, className: curTab === t ? 'on' : '', onClick: function() { setTab(t); } }, t); }),
+    ),
+    panel,
+  );
+  if (embedded) return content;
   return ce('div', null,
     ce(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
     ce(window.SharedNav, { active: 'settings' }),
-    ce('div', { className: 'st-page' },
-      ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置')),
-      msg ? ce('div', { style: { textAlign: 'center', fontSize: 12, color: 'var(--accent)', marginBottom: 8 } }, msg) : null,
-      ce('div', { className: 'st-tabs' },
-        TABS.map(function(t) { return ce('button', { key: t, className: curTab === t ? 'on' : '', onClick: function() { setTab(t); } }, t); }),
-      ),
-      panel,
-    ),
+    content,
   );
 }
+
+window.SettingsApp = SettingsApp;
+var root = document.getElementById('root');
+if (root && !window.__OB_EMBEDDED_SETTINGS) ReactDOM.createRoot(root).render(ce(SettingsApp));
 
 var root = document.getElementById('root');
 if (root) ReactDOM.createRoot(root).render(ce(SettingsApp));

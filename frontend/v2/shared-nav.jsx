@@ -48,9 +48,10 @@ function DarkToggle({ dark, onChange }) {
 }
 
 // ---- NavBar (14项导航链接，分三组) ----
-function SharedNav({ active }) {
+function SharedNav({ active, onNavigate }) {
   const link = (href, label, id) => (
-    <a key={id} href={href} className={active === id ? 'on' : ''}>{label}</a>
+    <a key={id} href={href} className={active === id ? 'on' : ''}
+       onClick={onNavigate ? function(e) { e.preventDefault(); onNavigate(id, href); } : undefined}>{label}</a>
   );
 
   const divider1 = <span key="d1" style={{

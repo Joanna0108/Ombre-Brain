@@ -41,8 +41,15 @@ function TopBarV2({ dark, onDark, compact, data }) {
 
 function AppV2() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [activeView, setActiveView] = uSA('timeline');
   const [data, setData] = uSA([]);
   const [loading, setLoading] = uSA(true);
+  // 已内嵌的视图列表;不在列表里的走整页跳转(如 /v2/mood/)
+  var EMBEDDED_VIEWS = { timeline: 1, settings: 1 };
+  function handleNavClick(id, href) {
+    if (EMBEDDED_VIEWS[id]) { setActiveView(id); return; }
+    window.location.href = href;
+  }
   const [loadError, setLoadError] = uSA(null);
   const [query, setQuery] = uSA('');
   // 后端全字段搜索结果(含完整正文 + matched_in 命中字段)
@@ -251,7 +258,8 @@ function AppV2() {
   return (
     <div className={`ob-shape-${t.nodeShape || 'circle'}`}>
       <TopBarV2 dark={dark} onDark={(v) => { setDark(v); setTweak('dark', v); }} data={data} />
-      <SharedNav active="timeline" />
+      <SharedNav active={activeView} onNavigate={handleNavClick} />
+      {activeView === 'timeline' && <>
       <main className="ob-page">
         <header className="ob-page-hd">
           <div>
@@ -474,6 +482,8 @@ function AppV2() {
         <TweakButton label="打开单条详情" onClick={() => setOpenItem(data.find(i => i.id === 'm11'))}>预览</TweakButton>
         <TweakButton label="打开当日详情" onClick={() => { setOpenItem(null); setOpenDay('2026-04-26'); }}>预览</TweakButton>
       </TweaksPanel>
+      </>}
+      {activeView === 'settings' && <SettingsApp embedded={true} />}
     </div>
   );
 }
