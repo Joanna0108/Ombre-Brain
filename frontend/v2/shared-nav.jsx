@@ -28,12 +28,18 @@ function SharedTopBar({ dark, onDark, data }) {
   );
 }
 
-// ---- DarkToggle (matches original ob-dark-btn style) ----
+// ---- DarkToggle (matches original ob-dark-btn style + integrates with OB_THEME) ----
 function DarkToggle({ dark, onChange }) {
   return (
     <button
       className={'ob-dark-btn' + (dark ? ' on' : '')}
-      onClick={() => onChange && onChange(!dark)}
+      onClick={() => {
+        const next = !dark;
+        if (window.OB_THEME && window.OB_THEME.setDarkMode) {
+          window.OB_THEME.setDarkMode(next);
+        }
+        if (onChange) onChange(next);
+      }}
       title={dark ? '切到日间' : '切到暗夜'}
     >
       <span className="ob-dark-icon">{dark ? '☀' : '☾'}</span>

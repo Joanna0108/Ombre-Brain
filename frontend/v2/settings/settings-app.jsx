@@ -32,7 +32,6 @@ function SettingsApp() {
   };
 
   useEffect(() => { fetchAll(); }, []);
-  useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : ''); }, [dark]);
 
   if (loading) return React.createElement('div', null,
     React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
