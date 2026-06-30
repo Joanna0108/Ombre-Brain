@@ -9,7 +9,7 @@ const NAV = `<nav class="lt-topbar">
 <a href="/v2/" class="lt-brand">Ombre Brain</a>
 <span class="lt-nav-group"><a href="/v2/cells/">Cells</a><a href="/v2/console/breath/">Breath</a><a href="/v2/network/">记忆网络</a><a href="/v2/calendar/">日历</a><a href="/v2/">时间线</a></span><span class="lt-nav-divider"></span>
 <span class="lt-nav-group"><a href="/v2/mood/">情绪</a><a href="/v2/replay/">Replay</a><a href="/v2/plans/">计划</a><a href="/v2/letters/" class="on">信</a><a href="/v2/anchors/">锚点</a></span><span class="lt-nav-divider"></span>
-<span class="lt-nav-group"><a href="/v2/console/import/">导入</a><a href="/v2/logs/">日志</a><a href="/v2/console/config/">设置</a><a href="/v2/about/">关于</a></span>
+<span class="lt-nav-group"><a href="/v2/console/import/">导入</a><a href="/v2/logs/">日志</a><a href="/v2/settings/">设置</a><a href="/v2/about/">关于</a></span>
 </nav>`;
 
 function LettersApp() {

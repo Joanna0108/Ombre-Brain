@@ -27,7 +27,7 @@ function Nav() {
     React.createElement('span', { className: 'rp-nav-group' },
       React.createElement('a', { href: '/v2/console/import/' }, '导入'),
       React.createElement('a', { href: '/v2/logs/' }, '日志'),
-      React.createElement('a', { href: '/v2/console/config/' }, '设置'),
+      React.createElement('a', { href: '/v2/settings/' }, '设置'),
       React.createElement('a', { href: '/v2/about/' }, '关于'),
     ),
   );

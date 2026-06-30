@@ -180,7 +180,7 @@ function MoodApp() {
         <span className="md-nav-group">
           <a href="/v2/console/import/">导入</a>
           <a href="/v2/logs/">日志</a>
-          <a href="/v2/console/config/">设置</a>
+          <a href="/v2/settings/">设置</a>
           <a href="/v2/about/">关于</a>
         </span>
       </nav>
