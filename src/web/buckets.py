@@ -631,7 +631,8 @@ def register(mcp) -> None:
                 arousal=body.get("arousal", 0.3),
                 bucket_type=body.get("type", "dynamic"),
                 protected=bool(body.get("protected", False)),
-                pinned=bool(body.get("highlight", False)),  # highlight→pin for visibility
+                pinned=bool(body.get("highlight", False)),
+                event_time=body.get("event_time", ""),
             )
 
             # Step 2: apply additional fields via update

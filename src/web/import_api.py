@@ -645,12 +645,12 @@ def register(mcp) -> None:
                     arousal=m.get("arousal", 0.3),
                     bucket_type=bt, protected=m.get("protected", False),
                     pinned=m.get("highlight", False),
+                    event_time=m.get("date", "2026-07-01") + "T12:00:00",
                 )
                 extra = {}
                 if m.get("anchor"):     extra["anchor"] = True
                 if m.get("highlight"):  extra["highlight"] = True
                 if m.get("domain"):     extra["domain"] = m["domain"]
-                extra["event_time"] = m.get("date", "2026-07-01") + "T12:00:00"
                 if extra:
                     await sh.bucket_mgr.update(bid, **extra)
 
