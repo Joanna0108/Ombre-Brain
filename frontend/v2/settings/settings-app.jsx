@@ -25,7 +25,7 @@ function Badge(on, labels) {
   return ce('span', { className: 'st-status ' + (on ? 'on' : 'off') }, on ? ll[0] : ll[1]);
 }
 
-var TABS = ['⓪版本','①我','②服务','③引擎','④桶行为','⑤环境变量','⑥MCP','⑦GitHub','⑧危险区'];
+var TABS = ['⓪版本','①我','②服务','③引擎','④桶行为','⑥MCP','⑦GitHub','⑧危险区'];
 
 function SettingsApp() {
   var _a = useSt(null), status = _a[0], setStatus = _a[1];
@@ -33,7 +33,6 @@ function SettingsApp() {
   var _c = useSt(null), tunnel = _c[0], setTunnel = _c[1];
   var _d = useSt(null), github = _d[0], setGithub = _d[1];
   var _e = useSt(null), embInfo = _e[0], setEmbInfo = _e[1];
-  var _f = useSt(null), envConfig = _f[0], setEnvConfig = _f[1];
   var _g = useSt(null), sampling = _g[0], setSampling = _g[1];
   var _h = useSt(''), humanName = _h[0], setHumanName = _h[1];
   var _i = useSt(''), hostVault = _i[0], setHostVault = _i[1];
@@ -55,7 +54,6 @@ function SettingsApp() {
       f_('/api/tunnel/status', { credentials: 'include' }),
       f_('/api/github/status', { credentials: 'include' }),
       f_('/api/embedding/info'),
-      f_('/api/env-config', { credentials: 'include' }),
       f_('/api/settings/sampling', { credentials: 'include' }),
       f_('/api/settings/human', { credentials: 'include' }),
       f_('/api/host-vault', { credentials: 'include' }),
@@ -64,10 +62,10 @@ function SettingsApp() {
       f_('/api/embedding/local/status?model=bge-m3', { credentials: 'include' }),
     ]).then(function(r) {
       if (r[0]) setStatus(r[0]); if (r[1]) setConfig(r[1]); if (r[2]) setTunnel(r[2]);
-      if (r[3]) setGithub(r[3]); if (r[4]) setEmbInfo(r[4]); if (r[5]) setEnvConfig(r[5]);
-      if (r[6]) setSampling(r[6]); if (r[7] && r[7].name) setHumanName(r[7].name);
-      if (r[8] && r[8].value != null) setHostVault(r[8].value); if (r[9]) setVersion(r[9]);
-      if (r[10]) setBucketsData(Array.isArray(r[10]) ? r[10] : []); if (r[11]) setLocalEmb(r[11]);
+      if (r[3]) setGithub(r[3]); if (r[4]) setEmbInfo(r[4]); if (r[5]) setSampling(r[5]);
+      if (r[6] && r[6].name) setHumanName(r[6].name);
+      if (r[7] && r[7].value != null) setHostVault(r[7].value); if (r[8]) setVersion(r[8]);
+      if (r[9]) setBucketsData(Array.isArray(r[9]) ? r[9] : []); if (r[10]) setLocalEmb(r[10]);
     }).catch(function() {}).finally(function() { setLoading(false); });
   }, []);
 
@@ -165,9 +163,6 @@ function SettingsApp() {
         config.surfacing ? Row('feel', ce('span', null, 'token=' + (config.surfacing.feel_max_tokens || '—'))) : null,
       ) : null,
     );
-  } else if (tab === '⑤环境变量') {
-    var envCount = (envConfig && envConfig.fields) ? Object.keys(envConfig.fields).length : 0;
-    panel = Sec('⑤ 环境变量', 'OMBRE_* 当前值 · 共 ' + envCount + ' 个（详细列表请用旧版 Dashboard → ⑤ 环境变量）');
   } else if (tab === '⑥MCP') {
     panel = Sec('⑥ MCP 配置', 'Claude Desktop 端点 · 主 /mcp + 副 /mcp-extra',
       ce('div', { className: 'st-row' }, ce('code', { style: { fontFamily: 'var(--mono)', fontSize: 12 } }, '/mcp'), ce('span', { style: { color: 'var(--ink-3)', fontSize: 12, marginLeft: 8 } }, '主端点（5工具）')),
