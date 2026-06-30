@@ -8,6 +8,8 @@ function SettingsApp() {
   var _e = useSt(null), embInfo = _e[0], setEmbInfo = _e[1];
   var _f = useSt(null), envConfig = _f[0], setEnvConfig = _f[1];
   var _g = useSt(null), sampling = _g[0], setSampling = _g[1];
+  var _n = useSt(null), version = _n[0], setVersion = _n[1];
+  var _o = useSt(null), localEmb = _o[0], setLocalEmb = _o[1];
   var _h = useSt(''), humanName = _h[0], setHumanName = _h[1];
   var _i = useSt(''), hostVault = _i[0], setHostVault = _i[1];
   var _j = useSt([]), bucketsData = _j[0], setBucketsData = _j[1];
@@ -29,13 +31,17 @@ function SettingsApp() {
       f_('/api/settings/sampling', { credentials: 'include' }),
       f_('/api/settings/human', { credentials: 'include' }),
       f_('/api/host-vault', { credentials: 'include' }),
+      f_('/api/version'),
       f_('/api/buckets', { credentials: 'include' }),
+      f_('/api/embedding/local/status?model=bge-m3', { credentials: 'include' }),
     ]).then(function(r) {
       if (r[0]) setStatus(r[0]); if (r[1]) setConfig(r[1]); if (r[2]) setTunnel(r[2]);
       if (r[3]) setGithub(r[3]); if (r[4]) setEmbInfo(r[4]); if (r[5]) setEnvConfig(r[5]); if (r[6]) setSampling(r[6]);
       if (r[7] && r[7].name) setHumanName(r[7].name);
       if (r[8] && r[8].value != null) setHostVault(r[8].value);
-      if (r[9]) setBucketsData(Array.isArray(r[9]) ? r[9] : []);
+      if (r[9]) setVersion(r[9]);
+      if (r[10]) setBucketsData(Array.isArray(r[10]) ? r[10] : []);
+      if (r[11]) setLocalEmb(r[11]);
     }).catch(function() {}).finally(function() { setLoading(false); });
   }, []);
 
@@ -49,11 +55,10 @@ function SettingsApp() {
     ce(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
     ce(window.SharedNav, { active: 'settings' }),
     ce('div', { className: 'st-page' },
-      ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置 · test12')),
-      ce('div', { className: 'st-section' }, ce('h3', null, '测试'),
-        ce('div', null, 'Emb: ' + (embInfo ? 'OK' : '—')),
-        ce('div', null, 'Env: ' + (envConfig ? 'OK' : '—')),
-        ce('div', null, 'Sampling: ' + (sampling ? 'OK' : '—')),
+      ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置 · test13')),
+      ce('div', { className: 'st-section' }, ce('h3', null, '全15状态测试'),
+        ce('div', null, 'Emb: ' + (embInfo ? 'OK' : '—') + ' | Env: ' + (envConfig ? 'OK' : '—') + ' | Sampling: ' + (sampling ? 'OK' : '—')),
+        ce('div', null, 'Version: ' + (version ? 'OK' : '—') + ' | LocalEmb: ' + (localEmb ? 'OK' : '—')),
       ),
     ),
   );
