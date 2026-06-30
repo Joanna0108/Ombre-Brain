@@ -5814,6 +5814,74 @@ body {
 .st-tabs button{font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink-3);cursor:pointer}
 .st-tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .st-loading{text-align:center;padding:60px;color:var(--ink-3);font-family:var(--serif)}
+
+/* mood (情绪星图) */
+.md-hd{text-align:center;padding:16px 20px 0}
+.md-hd h1{font-family:var(--serif);font-size:24px;font-weight:600}
+.md-hd p{font-size:12px;color:var(--ink-3);margin-top:2px}
+.md-main{display:flex;height:calc(100vh - 102px)}
+.md-left{width:240px;padding:20px;background:var(--paper);border-right:0.5px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.md-left h3{font-family:var(--serif);font-size:13px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px}
+.md-left .md-stat{font-size:12px;color:var(--ink-3)}
+.md-left .md-stat b{color:var(--ink)}
+.md-legend-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-3)}
+.md-legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.md-chart-wrap{flex:1;position:relative;background:var(--bg)}
+.md-chart-wrap svg{width:100%;height:100%;display:block}
+.md-tip{position:absolute;pointer-events:none;z-index:200;background:var(--paper);border:0.5px solid var(--line-2);border-radius:var(--r-sm);padding:10px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);font-size:12px;max-width:260px;display:none}
+.md-loading{display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--serif);font-size:18px;color:var(--ink-3)}
+
+/* replay (人生电影) */
+.rp-page{max-width:800px;margin:0 auto;padding:40px 20px}
+.rp-hd{text-align:center;margin-bottom:32px}
+.rp-hd h1{font-family:var(--serif);font-size:32px;font-weight:600}
+.rp-hd p{font-size:13px;color:var(--ink-3);margin-top:6px}
+.rp-controls{display:flex;gap:12px;justify-content:center;margin-bottom:28px;flex-wrap:wrap;align-items:center}
+.rp-controls input[type="month"]{padding:6px 12px;border:0.5px solid var(--line-2);border-radius:var(--r-sm);font-size:13px;background:var(--paper);color:var(--ink)}
+.rp-controls button{padding:8px 20px;border-radius:var(--r-sm);border:0.5px solid var(--line-2);background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-family:var(--serif);font-weight:600;transition:opacity .15s}
+.rp-controls button:hover{opacity:.85}
+.rp-controls button:disabled{opacity:.4;cursor:default}
+.rp-loading{text-align:center;padding:60px;color:var(--ink-3);font-family:var(--serif);font-size:18px}
+.rp-error{text-align:center;padding:40px;color:var(--rose)}
+.rp-scene{transition:all .3s}
+
+/* plans (计划看板) */
+.pl-page{max-width:800px;margin:0 auto;padding:32px 20px}
+.pl-hd h1{font-family:var(--serif);font-size:28px;text-align:center;margin-bottom:4px}
+.pl-hd p{text-align:center;font-size:12px;color:var(--ink-3);margin-bottom:32px}
+.pl-section{margin-bottom:24px}
+.pl-section h3{font-family:var(--serif);font-size:16px;font-weight:600;margin-bottom:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px}
+.pl-card{background:var(--paper);border:0.5px solid var(--line);border-radius:var(--r-md);padding:16px 20px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+.pl-card:hover{box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.pl-card .pl-card-title{font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px}
+.pl-card .pl-card-preview{font-size:12px;color:var(--ink-3);margin-top:6px}
+.pl-card .pl-card-meta{font-size:11px;color:var(--ink-3);margin-top:6px;display:flex;gap:16px}
+.pl-loading{text-align:center;padding:60px;color:var(--ink-3);font-family:var(--serif);font-size:18px}
+
+/* letters (信) */
+.lt-page{max-width:700px;margin:0 auto;padding:32px 20px}
+.lt-hd{text-align:center;margin-bottom:24px}
+.lt-hd h1{font-family:var(--serif);font-size:28px}
+.lt-hd p{font-size:12px;color:var(--ink-3);margin-top:4px}
+.lt-letter{background:var(--paper);border:0.5px solid var(--line);border-radius:var(--r-md);padding:24px;margin-bottom:16px;font-family:var(--serif);line-height:1.8;font-size:15px;white-space:pre-wrap}
+.lt-letter .lt-meta{font-family:var(--sans);font-size:11px;color:var(--ink-3);margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap}
+.lt-loading{text-align:center;padding:60px;color:var(--ink-3);font-family:var(--serif);font-size:18px}
+
+/* anchors (锚点) */
+.an-page{max-width:900px;margin:0 auto;padding:32px 20px}
+.an-hd{text-align:center;margin-bottom:24px}
+.an-hd h1{font-family:var(--serif);font-size:28px}
+.an-hd p{font-size:12px;color:var(--ink-3);margin-top:4px}
+.an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.an-card{background:var(--paper);border:0.5px solid var(--line);border-radius:var(--r-md);padding:14px;cursor:pointer;transition:all .15s}
+.an-card:hover{box-shadow:0 1px 4px rgba(0,0,0,.06);border-color:var(--accent)}
+.an-card .an-title{font-size:13px;font-weight:500;margin-bottom:4px}
+.an-card .an-num{font-family:var(--mono);font-size:10px;color:var(--ink-4);margin-bottom:4px}
+.an-release-btn{font-size:11px;padding:3px 10px;border-radius:999px;border:0.5px solid var(--rose);background:var(--paper);color:var(--rose);cursor:pointer;margin-top:8px;transition:all .15s}
+.an-release-btn:hover{background:var(--rose);color:#fff}
+.an-card .an-preview{font-size:11px;color:var(--ink-3)}
+.an-card .an-domain{font-size:10px;color:var(--accent);margin-top:6px}
+.an-loading{text-align:center;padding:60px;color:var(--ink-3);font-family:var(--serif);font-size:18px}
 </style>
 </head>
 <body>
@@ -5831,12 +5899,13 @@ body {
       "subline": "时间向下生长，最深处是一切开始的地方。"
     }/*EDITMODE-END*/;
     window.TWEAK_DEFAULTS = TWEAK_DEFAULTS;
-    window.__OB_EMBEDDED_SETTINGS = true;
+    window.__OB_SPA = true;
   </script>
 
   <script src="./assets/927fe617-3b33-47d9-9fad-434f60e62dd8.js"></script>
   <script src="./assets/038280d8-d7a9-40ed-a681-d4421b51f300.js"></script>
   <script src="./assets/695b8c57-227e-4927-a8b9-cfce127358fe.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 
   <!-- Ombre-Brain real-data bridge — must run before babel scripts -->
   <script src="./ombre-bridge.js"></script>
@@ -5852,6 +5921,11 @@ body {
   <script type="text/babel" src="./redehy-modal.js"></script>
   <script type="text/babel" src="./shared-nav.jsx"></script>
   <script type="text/babel" src="./settings/settings-app.jsx"></script>
+  <script type="text/babel" src="./mood/mood-app.jsx"></script>
+  <script type="text/babel" src="./replay/replay-app.jsx"></script>
+  <script type="text/babel" src="./plans/plans-app.jsx"></script>
+  <script type="text/babel" src="./letters/letters-app.jsx"></script>
+  <script type="text/babel" src="./anchors/anchors-app.jsx"></script>
   <script type="text/babel" src="./assets/e3c072fa-9a9e-44d6-8644-245593f02446.js"></script>
   <script type="text/babel" src="./assets/bab584d9-9b1c-49e8-a811-8b0125759b18.js"></script>
 

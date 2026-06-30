@@ -389,7 +389,7 @@ function SettingsApp(opts) {
 
 window.SettingsApp = SettingsApp;
 var root = document.getElementById('root');
-if (root && !window.__OB_EMBEDDED_SETTINGS) ReactDOM.createRoot(root).render(ce(SettingsApp));
+if (root && !window.__OB_SPA) ReactDOM.createRoot(root).render(ce(SettingsApp));
 
 var root = document.getElementById('root');
 if (root) ReactDOM.createRoot(root).render(ce(SettingsApp));

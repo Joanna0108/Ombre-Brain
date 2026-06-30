@@ -45,7 +45,7 @@ function AppV2() {
   const [data, setData] = uSA([]);
   const [loading, setLoading] = uSA(true);
   // 已内嵌的视图列表;不在列表里的走整页跳转(如 /v2/mood/)
-  var EMBEDDED_VIEWS = { timeline: 1, settings: 1 };
+  var EMBEDDED_VIEWS = { timeline: 1, settings: 1, mood: 1, replay: 1, plans: 1, letters: 1, anchors: 1 };
   function handleNavClick(id, href) {
     if (EMBEDDED_VIEWS[id]) { setActiveView(id); return; }
     window.location.href = href;
@@ -484,6 +484,11 @@ function AppV2() {
       </TweaksPanel>
       </>}
       {activeView === 'settings' && <SettingsApp embedded={true} />}
+      {activeView === 'mood' && <MoodApp embedded={true} />}
+      {activeView === 'replay' && <ReplayApp embedded={true} />}
+      {activeView === 'plans' && <PlansApp embedded={true} />}
+      {activeView === 'letters' && <LettersApp embedded={true} />}
+      {activeView === 'anchors' && <AnchorsApp embedded={true} />}
     </div>
   );
 }

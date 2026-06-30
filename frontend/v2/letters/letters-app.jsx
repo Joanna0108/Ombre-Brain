@@ -1,6 +1,7 @@
 const { useState, useEffect } = React;
 
-function LettersApp() {
+function LettersApp(opts) {
+  var embedded = opts && opts.embedded;
   const [letters, setLetters] = useState([]);
   const [bucketsData, setBucketsData] = useState([]);
   const [dark, setDark] = useState(false);
@@ -73,15 +74,12 @@ function LettersApp() {
     load();
   };
 
-  if (loading) return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'letters' }),
-    React.createElement('div', { className: 'lt-loading' }, '打开信箱…'),
-  );
+  var topbar = React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark });
+  var nav = React.createElement(window.SharedNav, { active: 'letters' });
+  var loadingEl = React.createElement('div', { className: 'lt-loading' }, '打开信箱…');
+  if (loading) return embedded ? loadingEl : React.createElement('div', null, topbar, nav, loadingEl);
 
-  return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'letters' }),
+  var content = React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'lt-page' },
       React.createElement('div', { className: 'lt-hd' },
         React.createElement('h1', null, '💌 两封信'),
@@ -171,6 +169,10 @@ function LettersApp() {
       }),
     ),
   );
+  if (embedded) return content;
+  return React.createElement('div', null, topbar, nav, content);
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(LettersApp));
+window.LettersApp = LettersApp;
+var root = document.getElementById('root');
+if (root && !window.__OB_SPA) ReactDOM.createRoot(root).render(React.createElement(LettersApp));

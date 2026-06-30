@@ -15,7 +15,8 @@ function weightColor(w) {
   return 'var(--ink-4)';
 }
 
-function PlansApp() {
+function PlansApp(opts) {
+  var embedded = opts && opts.embedded;
   const [groups, setGroups] = useState(null);
   const [bucketsData, setBucketsData] = useState([]);
   const [dark, setDark] = useState(false);
@@ -55,16 +56,12 @@ function PlansApp() {
     }
   };
 
-  if (loading) return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'plans' }),
-    React.createElement('div', { className: 'pl-loading' }, '加载计划看板…'),
-  );
-  if (error) return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'plans' }),
-    React.createElement('div', { className: 'pl-loading' }, '加载失败: ' + error),
-  );
+  var topbar = React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark });
+  var nav = React.createElement(window.SharedNav, { active: 'plans' });
+  var loadingEl = React.createElement('div', { className: 'pl-loading' }, '加载计划看板…');
+  if (loading) return embedded ? loadingEl : React.createElement('div', null, topbar, nav, loadingEl);
+  var errorEl = React.createElement('div', { className: 'pl-loading' }, '加载失败: ' + error);
+  if (error) return embedded ? errorEl : React.createElement('div', null, topbar, nav, errorEl);
 
   const sections = [
     { key: 'active', label: '进行中', emoji: '📋', color: 'var(--accent)' },
@@ -74,9 +71,7 @@ function PlansApp() {
 
   const total = sections.reduce((s, sec) => s + ((groups && groups[sec.key]) ? groups[sec.key].length : 0), 0);
 
-  return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'plans' }),
+  var content = React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'pl-page' },
       React.createElement('div', { className: 'pl-hd' },
         React.createElement('h1', null, '计划看板'),
@@ -153,6 +148,10 @@ function PlansApp() {
       }),
     ),
   );
+  if (embedded) return content;
+  return React.createElement('div', null, topbar, nav, content);
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(PlansApp));
+window.PlansApp = PlansApp;
+var root = document.getElementById('root');
+if (root && !window.__OB_SPA) ReactDOM.createRoot(root).render(React.createElement(PlansApp));

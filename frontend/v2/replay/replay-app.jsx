@@ -1,6 +1,7 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
-function ReplayApp() {
+function ReplayApp(opts) {
+  var embedded = opts && opts.embedded;
   const [start, setStart] = useState(() => (() => { const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString().slice(0, 7); })());
   const [end, setEnd] = useState(() => new Date().toISOString().slice(0, 7));
   const [result, setResult] = useState(null);
@@ -91,9 +92,9 @@ function ReplayApp() {
     });
   };
 
-  return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'replay' }),
+  var topbar = React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark });
+  var nav = React.createElement(window.SharedNav, { active: 'replay' });
+  var content = React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'rp-page' },
       React.createElement('div', { className: 'rp-hd' },
         React.createElement('h1', null, '🎬 人生电影'),
@@ -174,6 +175,10 @@ function ReplayApp() {
       ),
     ),
   );
+  if (embedded) return content;
+  return React.createElement('div', null, topbar, nav, content);
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(ReplayApp));
+window.ReplayApp = ReplayApp;
+var root = document.getElementById('root');
+if (root && !window.__OB_SPA) ReactDOM.createRoot(root).render(React.createElement(ReplayApp));

@@ -5,7 +5,8 @@ function quadKey(v, a) {
 }
 const QUAD_LABELS = { ha_hv: '兴奋', ha_lv: '紧张', la_hv: '放松', la_lv: '悲伤' };
 
-function MoodApp() {
+function MoodApp(opts) {
+  var embedded = opts && opts.embedded;
   const [feelBuckets, setFeelBuckets] = useState(null);
   const [bucketsData, setBucketsData] = useState([]);
   const [dark, setDark] = useState(false);
@@ -125,15 +126,11 @@ function MoodApp() {
     g.append('text').attr('x', pw - 30).attr('y', 10).attr('font-size', 10).attr('fill', '#d291b3').text('┅ A');
   }, [dayData]);
 
-  if (loading) return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'mood' }),
-    React.createElement('div', { className: 'md-loading' }, '绘制情绪星图…'),
-  );
+  var topbar = React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark });
+  var nav = React.createElement(window.SharedNav, { active: 'mood' });
+  if (loading) return embedded ? React.createElement('div', { className: 'md-loading' }, '绘制情绪星图…') : React.createElement('div', null, topbar, nav, React.createElement('div', { className: 'md-loading' }, '绘制情绪星图…'));
 
-  return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'mood' }),
+  var content = React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'md-hd' },
       React.createElement('h1', null, '情绪星图'),
       React.createElement('p', null, '横轴愉悦度 · 纵轴唤醒度 · 每颗星 = 一个 feel 记忆 · ' + (feelBuckets ? feelBuckets.length : 0) + ' 条'),
@@ -187,6 +184,10 @@ function MoodApp() {
       ),
     ),
   );
+  if (embedded) return content;
+  return React.createElement('div', null, topbar, nav, content);
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(MoodApp));
+window.MoodApp = MoodApp;
+var root = document.getElementById('root');
+if (root && !window.__OB_SPA) ReactDOM.createRoot(root).render(React.createElement(MoodApp));

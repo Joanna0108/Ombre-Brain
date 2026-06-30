@@ -1,6 +1,7 @@
 const { useState, useEffect } = React;
 
-function AnchorsApp() {
+function AnchorsApp(opts) {
+  var embedded = opts && opts.embedded;
   const [data, setData] = useState(null);
   const [bucketsData, setBucketsData] = useState([]);
   const [dark, setDark] = useState(false);
@@ -32,20 +33,14 @@ function AnchorsApp() {
   const anchors = (data && data.anchors) ? data.anchors : [];
   const limit = (data && data.limit) ? data.limit : 24;
 
-  if (loading) return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'anchors' }),
-    React.createElement('div', { className: 'an-loading' }, '加载锚点…'),
-  );
-  if (error) return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'anchors' }),
-    React.createElement('div', { className: 'an-loading' }, '加载失败: ' + error),
-  );
+  var topbar = React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark });
+  var nav = React.createElement(window.SharedNav, { active: 'anchors' });
+  var loadingEl = React.createElement('div', { className: 'an-loading' }, '加载锚点…');
+  if (loading) return embedded ? loadingEl : React.createElement('div', null, topbar, nav, loadingEl);
+  var errorEl = React.createElement('div', { className: 'an-loading' }, '加载失败: ' + error);
+  if (error) return embedded ? errorEl : React.createElement('div', null, topbar, nav, errorEl);
 
-  return React.createElement('div', null,
-    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
-    React.createElement(window.SharedNav, { active: 'anchors' }),
+  var content = React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'an-page' },
       React.createElement('div', { className: 'an-hd' },
         React.createElement('h1', null, '⚓ 锚点'),
@@ -79,6 +74,10 @@ function AnchorsApp() {
       anchors.length === 0 && React.createElement('div', { className: 'an-loading' }, '暂无锚点 — 在记忆详情页将一条记忆设为锚点'),
     ),
   );
+  if (embedded) return content;
+  return React.createElement('div', null, topbar, nav, content);
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(AnchorsApp));
+window.AnchorsApp = AnchorsApp;
+var root = document.getElementById('root');
+if (root && !window.__OB_SPA) ReactDOM.createRoot(root).render(React.createElement(AnchorsApp));
