@@ -208,8 +208,9 @@ function SettingsApp() {
         }),
       ),
       Row('Base URL', Inp({ value: form.dehyUrl || dehy.base_url || '', onChange: function(ev) { setF('dehyUrl', ev.target.value); }, style: { fontFamily: 'var(--mono)', fontSize: 11 } })),
-      Row('API Key', Pwd({ value: form.dehyKey || '', onChange: function(ev) { setF('dehyKey', ev.target.value); }, placeholder: dehy.api_key_masked || '留空 = 不修改' }),
-        Btn('保存', '', async function() { if (!form.dehyKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_COMPRESS_API_KEY: form.dehyKey } }), credentials: 'include' }); sm('Key 已保存，立即生效'); }),
+      Row('API Key', Pwd({ value: form.dehyKeyShow || dehy.api_key_masked || '', onFocus: function() { setF('dehyKeyShow', ''); }, onChange: function(ev) { setF('dehyKey', ev.target.value); setF('dehyKeyShow', ev.target.value); }, placeholder: dehy.api_key_masked || '留空 = 不修改' }),
+        Btn('保存', '', async function() { if (!form.dehyKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_COMPRESS_API_KEY: form.dehyKey } }), credentials: 'include' });
+          var v = form.dehyKey, m = v.length > 3 ? v[0] + '***' + v[v.length-1] : '***'; setF('dehyKeyShow', m); sm('Key 已保存'); }),
         Btn('测试', '', async function() { var r = await fetch('/api/test/dehydration', { method: 'POST', credentials: 'include' }); var d = await r.json(); alert(d.ok ? 'OK' : 'FAIL: ' + (d.error || '')); }),
       ),
       Row('Max Tokens', ce('input', { type: 'number', value: form.dehyTokens || dehy.max_tokens || 1024, onChange: function(ev) { setF('dehyTokens', parseInt(ev.target.value)); },
@@ -241,8 +242,9 @@ function SettingsApp() {
         var x = p[ev.target.value]; if (x) { setF('embModel', x.m); setF('embUrl', x.u); }
       } }, EMB_PRESETS)),
       Row('Model', Inp({ value: form.embModel || '', onChange: function(ev) { setF('embModel', ev.target.value); }, placeholder: 'gemini-embedding-001' })),
-      Row('API Key', Pwd({ value: form.embKey || '', onChange: function(ev) { setF('embKey', ev.target.value); }, placeholder: '留空 = 不修改' }),
-        Btn('保存', '', async function() { if (!form.embKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_EMBED_API_KEY: form.embKey } }), credentials: 'include' }); sm('Key 已保存，立即生效'); }),
+      Row('API Key', Pwd({ value: form.embKeyShow || '', onFocus: function() { setF('embKeyShow', ''); }, onChange: function(ev) { setF('embKey', ev.target.value); setF('embKeyShow', ev.target.value); }, placeholder: '留空 = 不修改' }),
+        Btn('保存', '', async function() { if (!form.embKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_EMBED_API_KEY: form.embKey } }), credentials: 'include' });
+          var v = form.embKey, m = v.length > 3 ? v[0] + '***' + v[v.length-1] : '***'; setF('embKeyShow', m); sm('Key 已保存'); }),
         Btn('测试', '', async function() { var r = await fetch('/api/test/embedding', { method: 'POST', credentials: 'include' }); var d = await r.json(); alert(d.ok ? 'OK' : 'FAIL: ' + (d.error || '')); }),
       ),
       ce('div', { style: { display: 'flex', gap: 8, marginTop: 8 } },
@@ -256,8 +258,9 @@ function SettingsApp() {
 
       // -- Replay --
       ce('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginTop: 20, marginBottom: 8 } }, '🎬 Replay 人生电影旁白'),
-      Row('API Key', Pwd({ value: form.replayKey || '', onChange: function(ev) { setF('replayKey', ev.target.value); }, placeholder: '留空 = 不修改' }),
-        Btn('保存', '', async function() { if (!form.replayKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_REPLAY_API_KEY: form.replayKey } }), credentials: 'include' }); sm('Key 已保存，立即生效'); }),
+      Row('API Key', Pwd({ value: form.replayKeyShow || '', onFocus: function() { setF('replayKeyShow', ''); }, onChange: function(ev) { setF('replayKey', ev.target.value); setF('replayKeyShow', ev.target.value); }, placeholder: '留空 = 不修改' }),
+        Btn('保存', '', async function() { if (!form.replayKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_REPLAY_API_KEY: form.replayKey } }), credentials: 'include' });
+          var v = form.replayKey, m = v.length > 3 ? v[0] + '***' + v[v.length-1] : '***'; setF('replayKeyShow', m); sm('Key 已保存'); }),
       ),
       Row('Base URL', Inp({ value: form.replayUrl || '', onChange: function(ev) { setF('replayUrl', ev.target.value); }, placeholder: 'https://api.deepseek.com/v1', style: { fontFamily: 'var(--mono)', fontSize: 11 } })),
       Row('Model', Inp({ value: form.replayModel || '', onChange: function(ev) { setF('replayModel', ev.target.value); }, placeholder: 'deepseek-chat' }),
