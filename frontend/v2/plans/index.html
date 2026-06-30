@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计划 — Ombre Brain</title>
+<link rel="manifest" href="/v2/manifest.json"><link rel="icon" type="image/svg+xml" href="/v2/favicon.svg">
+<script src="/v2/auth-token.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root{--bg:#faf8f5;--surface:#fff;--line:#e8e5df;--ink:#2d2a35;--ink-dim:#8a8796;--accent:#7c6fb8;--accent-soft:#ebe6f7;--gold:#d4a85f;--rose:#d291b3;--serif:'Cormorant Garamond','Noto Serif SC',Georgia,serif;--sans:'Inter',system-ui,-apple-system,sans-serif;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,.06)}
+[data-theme="dark"]{--bg:#1d1c27;--surface:#262433;--line:#363348;--ink:#e4e1f0;--ink-dim:#8a8796;--accent:#a78bd0;--accent-soft:#2d2840}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink)}
+.pl-topbar{display:flex;align-items:center;gap:6px;padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.pl-brand{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--accent);margin-right:16px;white-space:nowrap;text-decoration:none}
+.pl-topbar a{text-decoration:none;color:var(--ink-dim);font-size:13px;padding:4px 10px;border-radius:6px;transition:color .15s,background .15s;white-space:nowrap}
+.pl-topbar a:hover,.pl-topbar a.on{color:var(--accent);background:var(--accent-soft)}
+.pl-nav-group{display:flex;gap:2px}.pl-nav-divider{width:1px;height:18px;background:var(--line);margin:0 8px}
+.pl-page{max-width:800px;margin:0 auto;padding:32px 20px}
+.pl-hd h1{font-family:var(--serif);font-size:28px;text-align:center;margin-bottom:4px}
+.pl-hd p{text-align:center;font-size:12px;color:var(--ink-dim);margin-bottom:32px}
+.pl-section{margin-bottom:24px}
+.pl-section h3{font-family:var(--serif);font-size:16px;font-weight:600;margin-bottom:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.5px}
+.pl-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:10px;transition:box-shadow .15s;cursor:pointer}
+.pl-card:hover{box-shadow:var(--shadow)}
+.pl-card .pl-card-title{font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px}
+.pl-card .pl-card-title .pl-status{font-size:10px;padding:2px 8px;border-radius:8px;background:var(--accent-soft);color:var(--accent)}
+.pl-card .pl-card-title .pl-status.resolved{background:#e8f5e9;color:#4caf50}
+.pl-card .pl-card-title .pl-status.abandoned{background:#fbe9e7;color:#ef5350}
+.pl-card .pl-card-preview{font-size:12px;color:var(--ink-dim);margin-top:6px}
+.pl-card .pl-card-meta{font-size:11px;color:var(--ink-dim);margin-top:6px;display:flex;gap:16px}
+.pl-loading{text-align:center;padding:60px;color:var(--ink-dim);font-family:var(--serif);font-size:18px}
+</style>
+</head><body><div id="root"></div>
+<script src="/v2/theme-system.js"></script>
+<script type="text/babel" src="/v2/plans/plans-app.jsx"></script>
+</body></html>

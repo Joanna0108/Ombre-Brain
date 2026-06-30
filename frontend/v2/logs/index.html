@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日志 — Ombre Brain</title>
+<link rel="manifest" href="/v2/manifest.json"><link rel="icon" type="image/svg+xml" href="/v2/favicon.svg">
+<script src="/v2/auth-token.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root{--bg:#faf8f5;--surface:#fff;--line:#e8e5df;--ink:#2d2a35;--ink-dim:#8a8796;--accent:#7c6fb8;--accent-soft:#ebe6f7;--rose:#d291b3;--gold:#d4a85f;--serif:'Cormorant Garamond','Noto Serif SC',Georgia,serif;--sans:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono','Courier New',monospace}
+[data-theme="dark"]{--bg:#1d1c27;--surface:#262433;--line:#363348;--ink:#e4e1f0;--ink-dim:#8a8796;--accent:#a78bd0;--accent-soft:#2d2840}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink)}
+.lg-topbar{display:flex;align-items:center;gap:6px;padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.lg-brand{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--accent);margin-right:16px;white-space:nowrap;text-decoration:none}
+.lg-topbar a{text-decoration:none;color:var(--ink-dim);font-size:13px;padding:4px 10px;border-radius:6px;transition:color .15s,background .15s;white-space:nowrap}
+.lg-topbar a:hover,.lg-topbar a.on{color:var(--accent);background:var(--accent-soft)}
+.lg-nav-group{display:flex;gap:2px}.lg-nav-divider{width:1px;height:18px;background:var(--line);margin:0 8px}
+.lg-page{max-width:900px;margin:0 auto;padding:32px 20px}
+.lg-hd{text-align:center;margin-bottom:24px}
+.lg-hd h1{font-family:var(--serif);font-size:28px}
+.lg-hd p{font-size:12px;color:var(--ink-dim);margin-top:4px}
+.lg-filter{display:flex;gap:6px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.lg-filter button{font-size:11px;padding:4px 12px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink-dim);cursor:pointer;transition:all .15s}
+.lg-filter button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.lg-log-line{font-family:var(--mono);font-size:11px;padding:6px 12px;border-bottom:1px solid var(--line);line-height:1.6;display:flex;gap:12px}
+.lg-log-line .lg-time{color:var(--ink-dim);white-space:nowrap;min-width:60px}
+.lg-log-line.lg-warn{background:rgba(212,168,95,.08);color:var(--gold)}
+.lg-log-line.lg-error{background:rgba(210,145,179,.08);color:var(--rose)}
+.lg-log-line.lg-info{}
+.lg-loading{text-align:center;padding:60px;color:var(--ink-dim);font-family:var(--serif);font-size:18px}
+</style>
+</head><body><div id="root"></div>
+<script src="/v2/theme-system.js"></script>
+<script type="text/babel" src="/v2/logs/logs-app.jsx"></script>
+</body></html>

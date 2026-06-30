@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>情绪星图 — Ombre Brain</title>
+<link rel="manifest" href="/v2/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/v2/favicon.svg">
+<link rel="shortcut icon" href="/v2/favicon.ico">
+<link rel="apple-touch-icon" href="/v2/favicon-180.png">
+<script src="/v2/auth-token.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+:root {
+  --bg: #faf8f5; --surface: #ffffff; --line: #e8e5df;
+  --ink: #2d2a35; --ink-dim: #8a8796; --accent: #7c6fb8;
+  --accent-soft: #ebe6f7; --gold: #d4a85f; --rose: #d291b3;
+  --serif: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  --sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --radius: 10px; --shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+[data-theme="dark"] {
+  --bg: #1d1c27; --surface: #262433; --line: #363348;
+  --ink: #e4e1f0; --ink-dim: #8a8796; --accent: #a78bd0;
+  --accent-soft: #2d2840;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--ink); overflow: hidden; height: 100vh; }
+
+/* Top Nav (same as other views) */
+.md-topbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 20px; background: var(--surface);
+  border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 100;
+  flex-wrap: wrap;
+}
+.md-brand { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--accent); margin-right: 16px; white-space: nowrap; text-decoration: none; }
+.md-topbar a { text-decoration: none; color: var(--ink-dim); font-size: 13px; padding: 4px 10px; border-radius: 6px; transition: color 0.15s, background 0.15s; white-space: nowrap; }
+.md-topbar a:hover, .md-topbar a.on { color: var(--accent); background: var(--accent-soft); }
+.md-nav-group { display: flex; gap: 2px; }
+.md-nav-divider { width: 1px; height: 18px; background: var(--line); margin: 0 8px; }
+
+/* Page header */
+.md-hd { text-align: center; padding: 16px 20px 0; }
+.md-hd h1 { font-family: var(--serif); font-size: 24px; font-weight: 600; }
+.md-hd p { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+
+/* Main area */
+.md-main { display: flex; height: calc(100vh - 102px); }
+.md-left { width: 240px; padding: 20px; background: var(--surface); border-right: 1px solid var(--line); overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.md-left h3 { font-family: var(--serif); font-size: 13px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.md-left .md-stat { font-size: 12px; color: var(--ink-dim); }
+.md-left .md-stat b { color: var(--ink); }
+.md-legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--ink-dim); }
+.md-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+/* Chart area */
+.md-chart-wrap { flex: 1; position: relative; background: var(--bg); }
+.md-chart-wrap svg { width: 100%; height: 100%; display: block; }
+
+/* Tooltip */
+.md-tip {
+  position: absolute; pointer-events: none; z-index: 200;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 14px; box-shadow: var(--shadow);
+  font-size: 12px; max-width: 260px; display: none;
+}
+.md-tip .md-tip-title { font-weight: 600; font-size: 13px; }
+.md-tip .md-tip-summary { color: var(--ink-dim); margin-top: 3px; font-size: 11px; }
+
+/* Loading */
+.md-loading { display: flex; align-items: center; justify-content: center; height: 100%; font-family: var(--serif); font-size: 18px; color: var(--ink-dim); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="/v2/theme-system.js"></script>
+<script type="text/babel" src="/v2/mood/mood-app.jsx"></script>
+</body>
+</html>
