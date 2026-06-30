@@ -37,12 +37,21 @@ function NavBarV2({ active = 'timeline' }) {
   return (
     <nav className="ob-nav">
       <a href="/v2/cells/" className={active === 'cells' ? 'on' : ''}>记忆格</a>
+      <a href="/v2/console/breath/" className={active === 'breath' ? 'on' : ''}>Breath</a>
+      <a href="/v2/network/" className={active === 'network' ? 'on' : ''}>记忆网络</a>
+      <a href="/v2/calendar/" className={active === 'calendar' ? 'on' : ''}>日历</a>
       <a href="/v2/" className={active === 'timeline' ? 'on' : ''}>时间线</a>
-      <a href="/v2/network/" className={active === 'network' ? 'on' : ''}>记忆星图</a>
+      <span style={{width:'0.5px',background:'var(--line-2)',margin:'6px 6px',alignSelf:'stretch'}} />
+      <a href="/v2/mood/" className={active === 'mood' ? 'on' : ''}>情绪</a>
+      <a href="/v2/replay/" className={active === 'replay' ? 'on' : ''}>Replay</a>
+      <a href="/v2/plans/" className={active === 'plans' ? 'on' : ''}>计划</a>
+      <a href="/v2/letters/" className={active === 'letters' ? 'on' : ''}>信</a>
+      <a href="/v2/anchors/" className={active === 'anchors' ? 'on' : ''}>锚点</a>
+      <span style={{width:'0.5px',background:'var(--line-2)',margin:'6px 6px',alignSelf:'stretch'}} />
       <a href="/v2/console/import/">导入</a>
-      <a href="/v2/console/breath/">Breath 模拟</a>
-      <a href="/v2/console/config/">配置</a>
-      <a href="/v2/console/trash/">回收站</a>
+      <a href="/v2/logs/" className={active === 'logs' ? 'on' : ''}>日志</a>
+      <a href="/v2/settings/" className={active === 'settings' ? 'on' : ''}>设置</a>
+      <a href="/v2/about/" className={active === 'about' ? 'on' : ''}>关于</a>
     </nav>
   );
 }

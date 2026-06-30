@@ -21,6 +21,8 @@ function levelOf(n) {
 // ============================================================
 function CalendarApp() {
   const [buckets, setBuckets] = useState(null);
+  const [bucketsData, setBucketsData] = useState([]);
+  const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [year, setYear] = useState(() => new Date().getFullYear());
@@ -35,7 +37,9 @@ function CalendarApp() {
         const resp = await fetch('/api/buckets', { credentials: 'include' });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
-        setBuckets(Array.isArray(data) ? data : []);
+        const arr = Array.isArray(data) ? data : [];
+        setBuckets(arr);
+        setBucketsData(arr);
       } catch (e) {
         setError(e.message);
       } finally {
@@ -43,6 +47,11 @@ function CalendarApp() {
       }
     })();
   }, []);
+
+  // Sync dark mode
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+  }, [dark]);
 
   // Build day map from buckets
   const dayMap = useMemo(() => {
@@ -109,32 +118,8 @@ function CalendarApp() {
   // ============================================================
   return (
     <div>
-      {/* Top Nav Bar */}
-      <nav className="cal-topbar">
-        <a href="/v2/" className="cal-brand">Ombre Brain</a>
-        <span className="cal-nav-group">
-          <a href="/v2/cells/">Cells</a>
-          <a href="/v2/console/breath/">Breath</a>
-          <a href="/v2/network/">记忆网络</a>
-          <a href="/v2/calendar/" className="on">日历</a>
-          <a href="/v2/">时间线</a>
-        </span>
-        <span className="cal-nav-divider"></span>
-        <span className="cal-nav-group">
-          <a href="/v2/mood/">情绪</a>
-          <a href="/v2/replay/">Replay</a>
-          <a href="/v2/plans/">计划</a>
-          <a href="/v2/letters/">信</a>
-          <a href="/v2/anchors/">锚点</a>
-        </span>
-        <span className="cal-nav-divider"></span>
-        <span className="cal-nav-group">
-          <a href="/v2/console/import/">导入</a>
-          <a href="/v2/logs/">日志</a>
-          <a href="/v2/settings/">设置</a>
-          <a href="/v2/about/">关于</a>
-        </span>
-      </nav>
+      <window.SharedTopBar data={bucketsData} dark={dark} onDark={setDark} />
+      <window.SharedNav active="calendar" />
 
       {/* Page Header */}
       <div className="cal-page-hd">

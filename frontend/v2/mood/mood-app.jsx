@@ -21,6 +21,8 @@ function quadKey(v, a) {
 // ============================================================
 function MoodApp() {
   const [feelBuckets, setFeelBuckets] = useState(null);
+  const [bucketsData, setBucketsData] = useState([]);
+  const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hovered, setHovered] = useState(null);
@@ -34,8 +36,10 @@ function MoodApp() {
         const resp = await fetch('/api/buckets', { credentials: 'include' });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
+        const arr = Array.isArray(data) ? data : [];
+        setBucketsData(arr);
         // Filter feel-type memories
-        const feels = (Array.isArray(data) ? data : []).filter(b => b.feel || b.type === 'feel');
+        const feels = arr.filter(b => b.feel || b.type === 'feel');
         setFeelBuckets(feels);
       } catch (e) {
         setError(e.message);
@@ -44,6 +48,11 @@ function MoodApp() {
       }
     })();
   }, []);
+
+  // Sync dark mode
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+  }, [dark]);
 
   // Quadrant stats
   const quadStats = useMemo(() => {
@@ -158,32 +167,8 @@ function MoodApp() {
   // ============================================================
   return (
     <div>
-      {/* Nav */}
-      <nav className="md-topbar">
-        <a href="/v2/" className="md-brand">Ombre Brain</a>
-        <span className="md-nav-group">
-          <a href="/v2/cells/">Cells</a>
-          <a href="/v2/console/breath/">Breath</a>
-          <a href="/v2/network/">记忆网络</a>
-          <a href="/v2/calendar/">日历</a>
-          <a href="/v2/">时间线</a>
-        </span>
-        <span className="md-nav-divider"></span>
-        <span className="md-nav-group">
-          <a href="/v2/mood/" className="on">情绪</a>
-          <a href="/v2/replay/">Replay</a>
-          <a href="/v2/plans/">计划</a>
-          <a href="/v2/letters/">信</a>
-          <a href="/v2/anchors/">锚点</a>
-        </span>
-        <span className="md-nav-divider"></span>
-        <span className="md-nav-group">
-          <a href="/v2/console/import/">导入</a>
-          <a href="/v2/logs/">日志</a>
-          <a href="/v2/settings/">设置</a>
-          <a href="/v2/about/">关于</a>
-        </span>
-      </nav>
+      <window.SharedTopBar data={bucketsData} dark={dark} onDark={setDark} />
+      <window.SharedNav active="mood" />
 
       <div className="md-hd">
         <h1>情绪星图</h1>

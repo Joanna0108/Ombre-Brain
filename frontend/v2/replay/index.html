@@ -1,44 +1,71 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" dir="auto">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>人生电影 — Ombre Brain</title>
 <link rel="manifest" href="/v2/manifest.json">
 <link rel="icon" type="image/svg+xml" href="/v2/favicon.svg">
 <link rel="shortcut icon" href="/v2/favicon.ico">
+<link rel="apple-touch-icon" href="/v2/favicon-180.png">
 <script src="/v2/auth-token.js"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-:root{--bg:#faf8f5;--surface:#fff;--line:#e8e5df;--ink:#2d2a35;--ink-dim:#8a8796;--accent:#7c6fb8;--accent-soft:#ebe6f7;--gold:#d4a85f;--rose:#d291b3;--serif:'Cormorant Garamond','Noto Serif SC',Georgia,serif;--sans:'Inter',system-ui,-apple-system,sans-serif;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,.06)}
-[data-theme="dark"]{--bg:#1d1c27;--surface:#262433;--line:#363348;--ink:#e4e1f0;--ink-dim:#8a8796;--accent:#a78bd0;--accent-soft:#2d2840}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--sans);background:var(--bg);color:var(--ink)}
-.rp-topbar{display:flex;align-items:center;gap:6px;padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;flex-wrap:wrap}
-.rp-brand{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--accent);margin-right:16px;white-space:nowrap;text-decoration:none}
-.rp-topbar a{text-decoration:none;color:var(--ink-dim);font-size:13px;padding:4px 10px;border-radius:6px;transition:color .15s,background .15s;white-space:nowrap}
-.rp-topbar a:hover,.rp-topbar a.on{color:var(--accent);background:var(--accent-soft)}
-.rp-nav-group{display:flex;gap:2px}.rp-nav-divider{width:1px;height:18px;background:var(--line);margin:0 8px}
+/* ===== v2 base CSS (shared with all modules) ===== */
+:root {
+  --bg:#f4f3f7;--bg-2:#ecebf1;--paper:#fff;--paper-2:#f8f7fb;
+  --ink:#1a1922;--ink-2:color-mix(in oklab,var(--ink) 85%,var(--bg) 15%);--ink-3:color-mix(in oklab,var(--ink) 65%,var(--bg) 35%);--ink-4:color-mix(in oklab,var(--ink) 48%,var(--bg) 52%);
+  --line:rgba(26,25,34,0.08);--line-2:rgba(26,25,34,0.16);
+  --accent:#6e4f9a;--accent-2:#8265b3;--accent-3:var(--accent-a10);
+  --gold:#6e4f9a;--gold-soft:#b8a3d8;--rose:#d291b3;--rose-deep:#b06998;--sage:#8a8898;--amber:#6e4f9a;
+  --serif:"Cormorant Garamond","Noto Serif SC",Georgia,serif;
+  --sans:"Inter","Noto Sans SC",-apple-system,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r-sm:6px;--r-md:10px;--r-lg:16px;--r-xl:22px;
+}
+[data-theme="dark"] {
+  --bg:#14131c;--bg-2:#1d1c27;--paper:#1d1c27;--paper-2:#1d1c27;
+  --ink:#ece9f2;--ink-2:#c8c5d4;--ink-3:#8c889c;--ink-4:#5d5a6e;
+  --line:rgba(236,233,242,0.08);--line-2:rgba(236,233,242,0.16);
+  --accent:#a78bd0;--accent-2:#c4b3e0;--rose:#d291b3;--rose-deep:#b06998;
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:radial-gradient(1200px 700px at 90% -10%,rgba(176,120,200,0.10),transparent 60%),radial-gradient(900px 700px at -10% 110%,var(--rose-a08),transparent 60%),var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased}
+.ob-topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 36px;border-bottom:0.5px solid var(--line);background:rgba(244,243,247,0.7);backdrop-filter:blur(14px);position:sticky;top:0;z-index:50}
+[data-theme="dark"] .ob-topbar{background:rgba(20,19,28,0.7)}
+.ob-brand{display:flex;align-items:center;gap:14px}
+.ob-brand-mark{width:22px;height:22px;border-radius:50%;background:conic-gradient(from 180deg,var(--ink),var(--ink) 50%,transparent 50%,transparent);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.ob-brand-name{font-family:var(--serif);font-size:22px;font-weight:500;letter-spacing:0.02em;color:var(--ink)}
+.ob-brand-stats{display:flex;gap:14px;font-size:12px;color:var(--ink-3);padding-left:14px;border-left:0.5px solid var(--line-2);font-family:var(--mono)}
+.ob-brand-stats b{color:var(--ink-2);font-weight:600}
+.ob-nav{display:flex;gap:4px;padding:0 36px;border-bottom:0.5px solid var(--line);background:rgba(255,255,255,0.4)}
+[data-theme="dark"] .ob-nav{background:rgba(29,28,39,0.4)}
+.ob-nav a{padding:12px 14px;color:var(--ink-3);text-decoration:none;font-size:13px;border-bottom:1.5px solid transparent;margin-bottom:-0.5px;transition:color .15s;white-space:nowrap}
+.ob-nav a:hover{color:var(--ink)}
+.ob-nav a.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+
+/* ===== Replay-specific ===== */
 .rp-page{max-width:800px;margin:0 auto;padding:40px 20px}
 .rp-hd{text-align:center;margin-bottom:32px}
 .rp-hd h1{font-family:var(--serif);font-size:32px;font-weight:600}
-.rp-hd p{font-size:13px;color:var(--ink-dim);margin-top:6px}
+.rp-hd p{font-size:13px;color:var(--ink-3);margin-top:6px}
 .rp-controls{display:flex;gap:12px;justify-content:center;margin-bottom:28px;flex-wrap:wrap;align-items:center}
-.rp-controls input[type="date"]{padding:6px 12px;border:1px solid var(--line);border-radius:6px;font-size:13px;background:var(--surface);color:var(--ink)}
-.rp-controls button{padding:8px 20px;border-radius:6px;border:1px solid var(--line);background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-family:var(--serif);font-weight:600;transition:opacity .15s}
+.rp-controls input[type="date"]{padding:6px 12px;border:0.5px solid var(--line-2);border-radius:var(--r-sm);font-size:13px;background:var(--paper);color:var(--ink)}
+.rp-controls button{padding:8px 20px;border-radius:var(--r-sm);border:0.5px solid var(--line-2);background:var(--accent);color:#fff;font-size:13px;cursor:pointer;font-family:var(--serif);font-weight:600;transition:opacity .15s}
 .rp-controls button:hover{opacity:.85}
 .rp-controls button:disabled{opacity:.4;cursor:default}
-.rp-result{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:32px;line-height:1.9;font-family:var(--serif);font-size:16px;white-space:pre-wrap}
-.rp-result .scene{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.rp-result{background:var(--paper);border:0.5px solid var(--line);border-radius:var(--r-md);padding:32px;line-height:1.9;font-family:var(--serif);font-size:16px;white-space:pre-wrap}
+.rp-result .scene{margin-bottom:24px;padding-bottom:24px;border-bottom:0.5px solid var(--line)}
 .rp-result .scene:last-child{border-bottom:none}
-.rp-result .scene-time{font-size:12px;color:var(--ink-dim);margin-bottom:4px;font-family:var(--sans)}
-.rp-loading{text-align:center;padding:60px;color:var(--ink-dim);font-family:var(--serif);font-size:18px}
+.rp-result .scene-time{font-size:12px;color:var(--ink-3);margin-bottom:4px;font-family:var(--sans)}
+.rp-loading{text-align:center;padding:60px;color:var(--ink-3);font-family:var(--serif);font-size:18px}
 .rp-error{text-align:center;padding:40px;color:var(--rose)}
 </style>
 </head>
 <body><div id="root"></div>
 <script src="/v2/theme-system.js"></script>
+<script type="text/babel" src="/v2/shared-nav.jsx"></script>
 <script type="text/babel" src="/v2/replay/replay-app.jsx"></script>
 </body>
 </html>

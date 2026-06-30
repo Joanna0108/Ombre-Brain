@@ -22,7 +22,9 @@ const NODE_R_MAX = 22;
 // ============================================================
 function NetworkApp() {
   // ---- State ----
-  const [graph, setGraph] = useState(null);         // { nodes, edges, mode }
+  const [graph, setGraph] = useState(null);
+  const [bucketsData, setBucketsData] = useState([]);
+  const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [focusedNode, setFocusedNode] = useState(null);  // clicked concept
@@ -42,10 +44,17 @@ function NetworkApp() {
   useEffect(() => {
     (async () => {
       try {
-        const resp = await fetch('/api/network?mode=concept', { credentials: 'include' });
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const data = await resp.json();
-        setGraph(data);
+        const [gr, br] = await Promise.all([
+          fetch('/api/network?mode=concept', { credentials: 'include' }),
+          fetch('/api/buckets', { credentials: 'include' }),
+        ]);
+        if (!gr.ok) throw new Error('HTTP ' + gr.status);
+        const graphData = await gr.json();
+        setGraph(graphData);
+        if (br.ok) {
+          const bd = await br.json();
+          setBucketsData(Array.isArray(bd) ? bd : []);
+        }
       } catch (e) {
         setError(e.message);
       } finally {
@@ -53,6 +62,11 @@ function NetworkApp() {
       }
     })();
   }, []);
+
+  // Sync dark mode
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+  }, [dark]);
 
   // ---- Filtered graph ----
   const filtered = useMemo(() => {
@@ -247,32 +261,8 @@ function NetworkApp() {
   // ---- Render ----
   return (
     <div>
-      {/* Top Nav Bar */}
-      <nav className="nw-topbar">
-        <a href="/v2/" className="nw-brand">Ombre Brain</a>
-        <span className="nw-nav-group">
-          <a href="/v2/cells/">Cells</a>
-          <a href="/v2/console/breath/">Breath</a>
-          <a href="/v2/network/" className="on">记忆网络</a>
-          <a href="/v2/calendar/">日历</a>
-          <a href="/v2/">时间线</a>
-        </span>
-        <span className="nw-nav-divider"></span>
-        <span className="nw-nav-group">
-          <a href="/v2/mood/">情绪</a>
-          <a href="/v2/replay/">Replay</a>
-          <a href="/v2/plans/">计划</a>
-          <a href="/v2/letters/">信</a>
-          <a href="/v2/anchors/">锚点</a>
-        </span>
-        <span className="nw-nav-divider"></span>
-        <span className="nw-nav-group">
-          <a href="/v2/console/import/">导入</a>
-          <a href="/v2/logs/">日志</a>
-          <a href="/v2/settings/">设置</a>
-          <a href="/v2/about/">关于</a>
-        </span>
-      </nav>
+      <window.SharedTopBar data={bucketsData} dark={dark} onDark={setDark} />
+      <window.SharedNav active="network" />
 
       {/* Main */}
       <div className="nw-main">

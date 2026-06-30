@@ -35,16 +35,27 @@ function ConsoleTopBar({ stats, dark, onDark }) {
 function ConsoleNav({ active, trashCount = 0 }) {
   const tabs = [
     { id: 'cells',     label: '记忆格',     href: '/v2/cells/' },
+    { id: 'breath',    label: 'Breath',     href: '/v2/console/breath/' },
+    { id: 'network',   label: '记忆网络',   href: '/v2/network/' },
+    { id: 'calendar',  label: '日历',       href: '/v2/calendar/' },
     { id: 'timeline',  label: '时间线',     href: '/v2/' },
-    { id: 'star',      label: '记忆星图',   href: '/v2/network/' },
+    { id: '_d1',       label: '|',         href: '', sep: true },
+    { id: 'mood',      label: '情绪',       href: '/v2/mood/' },
+    { id: 'replay',    label: 'Replay',     href: '/v2/replay/' },
+    { id: 'plans',     label: '计划',       href: '/v2/plans/' },
+    { id: 'letters',   label: '信',         href: '/v2/letters/' },
+    { id: 'anchors',   label: '锚点',       href: '/v2/anchors/' },
+    { id: '_d2',       label: '|',         href: '', sep: true },
     { id: 'import',    label: '导入',       href: '/v2/console/import/' },
-    { id: 'breath',    label: 'Breath 模拟', href: '/v2/console/breath/' },
-    { id: 'config',    label: '配置',       href: '/v2/console/config/' },
+    { id: 'logs',      label: '日志',       href: '/v2/logs/' },
+    { id: 'config',    label: '设置',       href: '/v2/settings/' },
+    { id: 'about',     label: '关于',       href: '/v2/about/' },
     { id: 'trash',     label: '回收站',     href: '/v2/console/trash/' },
   ];
   return (
     <nav className="ob-nav">
       {tabs.map(t => (
+        t.sep ? <span key={t.id} style={{width:'0.5px',background:'var(--line-2)',margin:'6px 6px',alignSelf:'stretch'}} /> :
         <a
           key={t.id}
           href={t.href}

@@ -5,37 +5,27 @@
 
 const { useState, useEffect } = React;
 
-const NAV_HTML = `
-<nav class="pl-topbar">
-  <a href="/v2/" class="pl-brand">Ombre Brain</a>
-  <span class="pl-nav-group">
-    <a href="/v2/cells/">Cells</a><a href="/v2/console/breath/">Breath</a>
-    <a href="/v2/network/">记忆网络</a><a href="/v2/calendar/">日历</a>
-    <a href="/v2/">时间线</a>
-  </span><span class="pl-nav-divider"></span>
-  <span class="pl-nav-group">
-    <a href="/v2/mood/">情绪</a><a href="/v2/replay/">Replay</a>
-    <a href="/v2/plans/" class="on">计划</a><a href="/v2/letters/">信</a>
-    <a href="/v2/anchors/">锚点</a>
-  </span><span class="pl-nav-divider"></span>
-  <span class="pl-nav-group">
-    <a href="/v2/console/import/">导入</a><a href="/v2/logs/">日志</a>
-    <a href="/v2/settings/">设置</a><a href="/v2/about/">关于</a>
-  </span>
-</nav>`;
-
 function PlansApp() {
   const [groups, setGroups] = useState(null);  // { active:[], resolved:[], abandoned:[] }
+  const [bucketsData, setBucketsData] = useState([]);
+  const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const resp = await fetch('/api/plans', { credentials: 'include' });
+        const [resp, br] = await Promise.all([
+          fetch('/api/plans', { credentials: 'include' }),
+          fetch('/api/buckets', { credentials: 'include' }),
+        ]);
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
         setGroups(data);
+        if (br.ok) {
+          const bd = await br.json();
+          setBucketsData(Array.isArray(bd) ? bd : []);
+        }
       } catch (e) {
         setError(e.message);
       } finally {
@@ -43,6 +33,11 @@ function PlansApp() {
       }
     })();
   }, []);
+
+  // Sync dark mode
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+  }, [dark]);
 
   const handleAction = async (id, action) => {
     try {
@@ -59,19 +54,19 @@ function PlansApp() {
     } catch (e) { /* ignore */ }
   };
 
-  const statusClass = (s) => {
-    if (s === 'resolved') return ' resolved';
-    if (s === 'abandoned') return ' abandoned';
-    return '';
-  };
-
-  if (loading) return React.createElement('div', null,
-    React.createElement('div', { dangerouslySetInnerHTML: { __html: NAV_HTML } }),
-    React.createElement('div', { className: 'pl-loading' }, '加载计划看板…'),
+  if (loading) return (
+    <div>
+      <window.SharedTopBar data={bucketsData} dark={dark} onDark={setDark} />
+      <window.SharedNav active="plans" />
+      <div className="pl-loading">加载计划看板…</div>
+    </div>
   );
-  if (error) return React.createElement('div', null,
-    React.createElement('div', { dangerouslySetInnerHTML: { __html: NAV_HTML } }),
-    React.createElement('div', { className: 'pl-loading' }, '加载失败: ' + error),
+  if (error) return (
+    <div>
+      <window.SharedTopBar data={bucketsData} dark={dark} onDark={setDark} />
+      <window.SharedNav active="plans" />
+      <div className="pl-loading">加载失败: {error}</div>
+    </div>
   );
 
   const sections = [
@@ -80,52 +75,51 @@ function PlansApp() {
     { key: 'abandoned', label: '已放弃', emoji: '🗑️' },
   ];
 
-  return React.createElement('div', null,
-    React.createElement('div', { dangerouslySetInnerHTML: { __html: NAV_HTML } }),
-    React.createElement('div', { className: 'pl-page' },
-      React.createElement('div', { className: 'pl-hd' },
-        React.createElement('h1', null, '计划看板'),
-        React.createElement('p', null, 'Plan Kanban — 跟踪 AI 生成的执行计划'),
-      ),
-      sections.map(sec => {
-        const items = (groups && groups[sec.key]) ? groups[sec.key] : [];
-        return React.createElement('div', { key: sec.key, className: 'pl-section' },
-          React.createElement('h3', null, `${sec.emoji} ${sec.label} · ${items.length}`),
-          items.sort((a,b) => (b.weight||0) - (a.weight||0)).map(plan => {
-            const meta = plan.metadata || plan;
-            return React.createElement('div', {
-              key: plan.id,
-              className: 'pl-card',
-              onClick: () => window.open('/v2/?id=' + plan.id, '_blank'),
-            },
-              React.createElement('div', { className: 'pl-card-title' },
-                React.createElement('span', null, meta.name || plan.id),
-                sec.key === 'active' && React.createElement('span', { className: 'pl-status' }, meta.status || 'active'),
-                sec.key === 'resolved' && React.createElement('span', { className: 'pl-status resolved' }, 'resolved'),
-                sec.key === 'abandoned' && React.createElement('span', { className: 'pl-status abandoned' }, 'abandoned'),
-              ),
-              meta.summary && React.createElement('div', { className: 'pl-card-preview' }, meta.summary.slice(0, 150)),
-              React.createElement('div', { className: 'pl-card-meta' },
-                React.createElement('span', null, '权重: ' + (meta.weight != null ? Number(meta.weight).toFixed(1) : '—')),
-                React.createElement('span', null, '重要度: ' + (meta.importance || 5)),
-                meta.domain && meta.domain.length > 0 && React.createElement('span', null, '域: ' + meta.domain.join(', ')),
-              ),
-              sec.key === 'active' && React.createElement('div', { style: { marginTop: '8px', display: 'flex', gap: '6px' }, onClick: e => e.stopPropagation() },
-                React.createElement('button', {
-                  style: { fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink-dim)', cursor: 'pointer' },
-                  onClick: () => handleAction(plan.id, 'resolve'),
-                }, '✅ 完成'),
-                React.createElement('button', {
-                  style: { fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink-dim)', cursor: 'pointer' },
-                  onClick: () => handleAction(plan.id, 'abandon'),
-                }, '🗑️ 放弃'),
-              ),
-            );
-          }),
-        );
-      }),
-    ),
+  return (
+    <div>
+      <window.SharedTopBar data={bucketsData} dark={dark} onDark={setDark} />
+      <window.SharedNav active="plans" />
+      <div className="pl-page">
+        <div className="pl-hd">
+          <h1>计划看板</h1>
+          <p>Plan Kanban — 跟踪 AI 生成的执行计划</p>
+        </div>
+        {sections.map(sec => {
+          const items = (groups && groups[sec.key]) ? groups[sec.key] : [];
+          return (
+            <div key={sec.key} className="pl-section">
+              <h3>{sec.emoji} {sec.label} · {items.length}</h3>
+              {items.sort((a,b) => (b.weight||0) - (a.weight||0)).map(plan => {
+                const meta = plan.metadata || plan;
+                return (
+                  <div key={plan.id} className="pl-card" onClick={() => window.open('/v2/?id=' + plan.id, '_blank')}>
+                    <div className="pl-card-title">
+                      <span>{meta.name || plan.id}</span>
+                      {sec.key === 'active' && <span className="pl-status">{meta.status || 'active'}</span>}
+                      {sec.key === 'resolved' && <span className="pl-status resolved">resolved</span>}
+                      {sec.key === 'abandoned' && <span className="pl-status abandoned">abandoned</span>}
+                    </div>
+                    {meta.summary && <div className="pl-card-preview">{meta.summary.slice(0, 150)}</div>}
+                    <div className="pl-card-meta">
+                      <span>权重: {meta.weight != null ? Number(meta.weight).toFixed(1) : '—'}</span>
+                      <span>重要度: {meta.importance || 5}</span>
+                      {meta.domain && meta.domain.length > 0 && <span>域: {meta.domain.join(', ')}</span>}
+                    </div>
+                    {sec.key === 'active' && (
+                      <div style={{ marginTop: '8px', display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                        <button style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink-3)', cursor: 'pointer' }} onClick={() => handleAction(plan.id, 'resolve')}>✅ 完成</button>
+                        <button style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink-3)', cursor: 'pointer' }} onClick={() => handleAction(plan.id, 'abandon')}>🗑️ 放弃</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(PlansApp));
+ReactDOM.createRoot(document.getElementById('root')).render(<PlansApp />);
