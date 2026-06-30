@@ -166,14 +166,16 @@ function SettingsApp() {
       ) : null,
     );
   } else if (tab === '⑤环境变量') {
-    panel = Sec('⑤ 环境变量', 'OMBRE_* 当前值',
-      envConfig && envConfig.fields ? ce('div', null,
-        Object.keys(envConfig.fields).sort().map(function(kk) {
-          var vv = envConfig.fields[kk] || '';
-          return Row(kk, ce('span', null, (kk.indexOf('_KEY') >= 0) ? (vv ? '***已配置' : '未配置') : (vv || '—')));
-        }),
-      ) : null,
-    );
+    var envRows = [];
+    if (envConfig && envConfig.fields) {
+      var keys = Object.keys(envConfig.fields).sort();
+      for (var ki = 0; ki < keys.length; ki++) {
+        var kk = keys[ki];
+        var vv = envConfig.fields[kk] || '';
+        envRows.push(Row(kk, ce('span', null, (kk.indexOf('_KEY') >= 0) ? (vv ? '***已配置' : '未配置') : (vv || '—'))));
+      }
+    }
+    panel = Sec('⑤ 环境变量', 'OMBRE_* 当前值（' + (envConfig && envConfig.fields ? Object.keys(envConfig.fields).length : 0) + ' 个）', ce('div', null, envRows));
   } else if (tab === '⑥MCP') {
     panel = Sec('⑥ MCP 配置', 'Claude Desktop 端点 · 主 /mcp + 副 /mcp-extra',
       ce('div', { className: 'st-row' }, ce('code', { style: { fontFamily: 'var(--mono)', fontSize: 12 } }, '/mcp'), ce('span', { style: { color: 'var(--ink-3)', fontSize: 12, marginLeft: 8 } }, '主端点（5工具）')),
