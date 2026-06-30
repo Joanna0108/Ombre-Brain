@@ -45,6 +45,13 @@ body{background:radial-gradient(1200px 700px at 90% -10%,rgba(176,120,200,0.10),
 .ob-nav a{padding:12px 14px;color:var(--ink-3);text-decoration:none;font-size:13px;border-bottom:1.5px solid transparent;margin-bottom:-0.5px;transition:color .15s;white-space:nowrap}
 .ob-nav a:hover{color:var(--ink)}
 .ob-nav a.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.ob-dark-btn{appearance:none;border:0;width:36px;height:36px;border-radius:50%;background:var(--paper);border:0.5px solid var(--line-2);color:var(--ink-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.ob-dark-btn:hover{background:var(--ink);color:var(--paper);transform:rotate(20deg)}
+.ob-dark-btn.on{background:var(--accent-3);color:var(--accent);border-color:var(--accent)}
+.ob-theme-toggle-wrap{position:relative;display:inline-block}
+.ob-theme-btn{appearance:none;border:0;width:36px;height:36px;border-radius:50%;background:var(--paper);border:0.5px solid var(--line-2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0}
+.ob-theme-btn:hover{transform:rotate(20deg);border-color:var(--ink-3)}
+.ob-theme-btn-mark{width:16px;height:16px;border-radius:50%;background:conic-gradient(from 0deg,var(--accent),var(--rose),var(--gold),var(--accent));border:0.5px solid var(--ink-4)}
 
 /* ===== Network-specific ===== */
 .nw-main{display:flex;height:calc(100vh - 100px);position:relative}

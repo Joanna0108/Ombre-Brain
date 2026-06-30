@@ -15,8 +15,8 @@ function SharedTopBar({ dark, onDark, data }) {
         <span className="ob-brand-name">Ombre Brain</span>
         <div className="ob-brand-stats">
           <span><b>{stats.length}</b> 格</span>
-          <span><b>{stats.filter(i => i.protected).length}</b> 钉决</span>
-          <span><b>{stats.filter(i => i.feel).length}</b> feel</span>
+          <span><b>{stats.filter(i => i.protected || i.pinned).length}</b> 钉决</span>
+          <span><b>{stats.filter(i => i.feel || i.type === 'feel').length}</b> feel</span>
           <span><b>{stats.filter(i => i.importance >= 8 || i.highlight).length}</b> 重要</span>
         </div>
       </div>
@@ -28,17 +28,17 @@ function SharedTopBar({ dark, onDark, data }) {
   );
 }
 
-// ---- DarkToggle ----
+// ---- DarkToggle (matches original ob-dark-btn style) ----
 function DarkToggle({ dark, onChange }) {
-  return React.createElement('button', {
-    onClick: () => onChange && onChange(!dark),
-    title: dark ? '切到亮色模式' : '切到暗色模式',
-    style: {
-      background: 'transparent', border: '0.5px solid var(--line-2)',
-      borderRadius: '8px', padding: '5px 9px', cursor: 'pointer',
-      fontSize: '14px', lineHeight: 1, color: 'var(--ink-3)'
-    }
-  }, dark ? '☀️' : '🌙');
+  return (
+    <button
+      className={'ob-dark-btn' + (dark ? ' on' : '')}
+      onClick={() => onChange && onChange(!dark)}
+      title={dark ? '切到日间' : '切到暗夜'}
+    >
+      <span className="ob-dark-icon">{dark ? '☀' : '☾'}</span>
+    </button>
+  );
 }
 
 // ---- NavBar (14项导航链接，分三组) ----
