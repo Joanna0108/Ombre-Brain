@@ -60,7 +60,7 @@ def register(mcp) -> None:
         password = body.get("password", "")
         if sh._verify_any_password(password):
             token = sh._create_session()
-            resp = JSONResponse({"ok": True})
+            resp = JSONResponse({"ok": True, "token": token})
             sh._set_session_cookie(resp, token, request)
             return resp
         return JSONResponse({"error": "密码错误"}, status_code=401)

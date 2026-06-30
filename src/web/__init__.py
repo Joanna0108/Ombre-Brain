@@ -30,6 +30,7 @@ from . import embedding
 from . import ollama_local
 from . import config_api
 from . import replay
+from . import v2_static
 
 
 def register_all(mcp) -> None:
@@ -38,6 +39,7 @@ def register_all(mcp) -> None:
     tunnel.register(mcp)
     oauth.register(mcp)
     dashboard.register(mcp)
+    v2_static.register(mcp)  # v2 SPA must register after dashboard (overrides root /)
     system.register(mcp)
     meta.register(mcp)
     search.register(mcp)

@@ -323,7 +323,13 @@ def _create_session() -> str:
 
 
 def _is_authenticated(request: Request) -> bool:
+    # Primary: session cookie
     token = request.cookies.get("ombre_session")
+    # Fallback: X-Admin-Token header (v2 SPA sends this for API calls;
+    # Web Workers can't read httponly cookie but can send custom headers)
+    if not token:
+        raw = (request.headers.get("X-Admin-Token", "") or "").strip()
+        token = raw if raw else None
     if not token:
         return False
     expiry = _sessions.get(token)

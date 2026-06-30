@@ -23,25 +23,22 @@ def register(mcp) -> None:
 
     @mcp.custom_route("/", methods=["GET"])
     async def root_dashboard(request: Request) -> Response:
-        """Serve dashboard HTML directly at root.
+        """Root now redirects to v2 SPA (Timeline). """
+        from starlette.responses import RedirectResponse
+        return RedirectResponse(url="/v2/", status_code=302)
 
-        历史上 / 会 307 → /dashboard，但叠加 Cloudflare Tunnel 的 Always Use HTTPS /
-        Page Rule 时容易触发 ERR_TOO_MANY_REDIRECTS。直接返回 HTML，少一次跳转，
-        既能修复回环，也省一个 RTT。
-        """
+    @mcp.custom_route("/dashboard", methods=["GET"])
+    async def legacy_dashboard(request: Request) -> Response:
+        """Serve the legacy v1 dashboard.html (kept for backward compat)."""
         from starlette.responses import HTMLResponse
         dashboard_path = os.path.join(sh.repo_root, "frontend", "dashboard.html")
         try:
             with open(dashboard_path, "r", encoding="utf-8") as f:
                 html = f.read()
-            # U-09 fix: cache-bust static SVG assets so logo updates are visible
-            # without manual hard-refresh after upgrade. 只动字面量 /static/*.svg URL。
             for asset in ("/static/icon.svg", "/static/favicon.svg"):
                 html = html.replace(asset, f"{asset}?v={sh.version}")
             return HTMLResponse(html)
         except FileNotFoundError:
-            # 走到这里 = 部署目录里缺 frontend/dashboard.html。它本应随仓库一起下发
-            # （已纳入 git，未被 .gitignore 排除），最常见原因是克隆/部署了旧版本。
             return HTMLResponse(
                 "<h1>dashboard.html not found</h1>"
                 f"<p>Expected at: <code>{_html.escape(dashboard_path)}</code></p>"

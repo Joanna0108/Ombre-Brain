@@ -133,6 +133,12 @@ def register(mcp) -> None:
 
             preserve_raw = request.query_params.get("preserve_raw", "").lower() in ("1", "true")
             resume = request.query_params.get("resume", "").lower() in ("1", "true")
+            # v2 Console bridge params (optional)
+            mode = request.query_params.get("mode", "small")  # "small" or "large"
+            try:
+                max_chunks = int(request.query_params.get("max_chunks", "0"))
+            except (ValueError, TypeError):
+                max_chunks = 0
 
         except Exception as e:
             return JSONResponse({"error": f"Failed to read upload: {e}"}, status_code=400)
@@ -140,6 +146,10 @@ def register(mcp) -> None:
         # Start import in background
         async def _run_import():
             try:
+                # Store v2 bridge params on engine for the chunk processor to read
+                if max_chunks > 0:
+                    sh.import_engine._max_chunks = max_chunks
+                sh.import_engine._import_mode = mode
                 await sh.import_engine.start(raw_content, filename, preserve_raw, resume)
             except Exception as e:
                 logger.error(f"Import failed: {e}")
@@ -204,15 +214,22 @@ def register(mcp) -> None:
             all_buckets.sort(key=lambda b: b["metadata"].get("created", ""), reverse=True)
             results = []
             for b in all_buckets[:limit]:
+                meta = b.get("metadata", {})
                 results.append({
                     "id": b["id"],
-                    "name": b["metadata"].get("name", ""),
+                    "name": meta.get("name", ""),
                     "content": b["content"][:300],
-                    "type": b["metadata"].get("type", ""),
-                    "domain": b["metadata"].get("domain", []),
-                    "tags": b["metadata"].get("tags", []),
-                    "importance": b["metadata"].get("importance", 5),
-                    "created": b["metadata"].get("created", ""),
+                    "type": meta.get("type", ""),
+                    "domain": meta.get("domain", []),
+                    "tags": meta.get("tags", []),
+                    "importance": meta.get("importance", 5),
+                    "created": meta.get("created", ""),
+                    "event_time": meta.get("event_time", ""),
+                    "protected": bool(meta.get("protected", False)),
+                    "highlight": bool(meta.get("highlight", False)),
+                    "internalized": bool(meta.get("digested", False)),
+                    "score": sh.decay_engine.calculate_score(meta) if sh.decay_engine else 0,
+                    "raw_source": meta.get("raw_source", ""),
                 })
             return JSONResponse({"buckets": results, "total": len(all_buckets)})
         except Exception as e:

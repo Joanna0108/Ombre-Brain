@@ -25,11 +25,109 @@ except ImportError:  # pragma: no cover
     from ..utils import strip_wikilinks, extract_wikilinks  # type: ignore
 
 
+import json as _json_lib_inline
+import os as _os_inline
+from datetime import datetime, timezone as _timezone
+
+
+def _now_iso() -> str:
+    return datetime.now(_timezone.utc).isoformat()
+
+
+class _SearchLog:
+    """In-memory ring buffer for search traces (hit-stats + recent-searches API)."""
+
+    def __init__(self, max_entries: int = 200):
+        self._hits: dict[str, int] = {}       # bucket_id → cumulative surface_count
+        self._searches: list[dict] = []       # recent search entries
+        self._max = max_entries
+        self._total_searches = 0
+        self._load()
+
+    def _path(self) -> str:
+        return _os_inline.path.join(sh.config.get("buckets_dir", "data/buckets"), ".search_log.json")
+
+    def _load(self) -> None:
+        try:
+            p = self._path()
+            if _os_inline.path.exists(p):
+                with open(p, "r", encoding="utf-8") as f:
+                    data = _json_lib_inline.load(f)
+                self._hits = data.get("hits", {})
+                self._searches = data.get("searches", [])[-self._max:]
+                self._total_searches = data.get("total_searches", 0)
+        except Exception:
+            pass
+
+    def _save(self) -> None:
+        try:
+            p = self._path()
+            _os_inline.makedirs(_os_inline.path.dirname(p), exist_ok=True)
+            tmp = p + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                _json_lib_inline.dump({
+                    "hits": self._hits,
+                    "searches": self._searches[-self._max:],
+                    "total_searches": self._total_searches,
+                }, f)
+            _os_inline.replace(tmp, p)
+        except Exception:
+            pass
+
+    def record(self, kind: str, query: str, results: list[dict]) -> None:
+        self._total_searches += 1
+        for r in results:
+            bid = r.get("id", "")
+            if bid:
+                self._hits[bid] = self._hits.get(bid, 0) + 1
+        entry = {
+            "ts": _now_iso(),
+            "kind": kind,
+            "query": query[:200],
+            "result_count": len(results),
+            "top": [{
+                "id": r.get("id", ""),
+                "name": r.get("name", ""),
+                "score": r.get("score", 0),
+                "protected": r.get("protected", False),
+                "highlight": r.get("highlight", False),
+                "type": r.get("type", "dynamic"),
+                "title_hit": bool(query and query.lower() in (r.get("name", "") or "").lower()),
+                "matched_in": r.get("matched_in", None),
+            } for r in results[:5]],
+        }
+        self._searches.append(entry)
+        if len(self._searches) > self._max:
+            self._searches = self._searches[-self._max:]
+        try:
+            self._save()
+        except Exception:
+            pass
+
+    def get_stats(self):
+        return {
+            "total_searches": self._total_searches,
+            "total_buckets": len(self._hits),
+            "hit_buckets": sum(1 for v in self._hits.values() if v > 0),
+            "zero_buckets": 0,
+        }
+
+    def get_items(self, order: str = "desc", limit: int = 50):
+        sorted_hits = sorted(self._hits.items(), key=lambda x: x[1], reverse=(order == "desc"))
+        return [{"id": bid, "count": cnt} for bid, cnt in sorted_hits[:limit]]
+
+    def get_recent(self, limit: int = 10):
+        return self._searches[-limit:][::-1]
+
+
+_search_log = _SearchLog()
+
+
 def register(mcp) -> None:
 
     @mcp.custom_route("/api/search", methods=["GET"])
     async def api_search(request: Request) -> Response:
-        """Search buckets by query."""
+        """Search buckets by query. Supports ?simulate=true for Breath debug dry-run."""
         from starlette.responses import JSONResponse
         err = sh._require_auth(request)
         if err:
@@ -37,8 +135,15 @@ def register(mcp) -> None:
         query = request.query_params.get("q", "")
         if not query:
             return JSONResponse({"error": "missing q parameter"}, status_code=400)
+        simulate = request.query_params.get("simulate", "").lower() == "true"
+        include_vector = request.query_params.get("include_vector", "").lower() == "true"
         try:
-            matches = await sh.bucket_mgr.search(query, limit=10)
+            limit = int(request.query_params.get("limit", "10"))
+        except (ValueError, TypeError):
+            limit = 10
+
+        try:
+            matches = await sh.bucket_mgr.search(query, limit=max(limit, 10))
             result = []
             for b in matches:
                 meta = b.get("metadata", {})
@@ -50,11 +155,39 @@ def register(mcp) -> None:
                     "valence": meta.get("valence", 0.5),
                     "arousal": meta.get("arousal", 0.3),
                     "content_preview": strip_wikilinks(b.get("content", ""))[:200],
+                    "protected": bool(meta.get("protected", False)),
+                    "highlight": bool(meta.get("highlight", False)),
+                    "type": meta.get("type", "dynamic"),
+                    "matched_in": b.get("matched_in", None),
                 })
+
+            _search_log.record("search", query, result)
+
+            if simulate:
+                keyword_hits = result[:limit]
+                vector_hits = []
+                if include_vector and sh.embedding_engine and sh.embedding_engine.enabled:
+                    try:
+                        vec_results = await sh.embedding_engine.search_similar(query, top_k=limit)
+                        for bid, sim in vec_results:
+                            b = await sh.bucket_mgr.get(bid)
+                            if b:
+                                meta = b.get("metadata", {})
+                                vector_hits.append({
+                                    "id": bid,
+                                    "name": meta.get("name", bid),
+                                    "similarity": round(sim, 4),
+                                })
+                    except Exception:
+                        pass
+                return JSONResponse({
+                    "keyword_hits": keyword_hits,
+                    "vector_hits": vector_hits,
+                })
+
             return JSONResponse(result)
         except Exception as e:
             return JSONResponse({"error": str(e)}, status_code=500)
-
 
     @mcp.custom_route("/api/duplicates", methods=["GET"])
     async def api_duplicates(request: Request) -> Response:
@@ -345,3 +478,185 @@ def register(mcp) -> None:
             })
         except Exception as e:
             return JSONResponse({"error": str(e)}, status_code=500)
+
+    # --- Scoring config (Breath console knob panel) ---
+
+    @mcp.custom_route("/api/scoring-config", methods=["GET"])
+    async def api_scoring_config_get(request: Request) -> Response:
+        """Get current scoring weights and schema for the Breath debug panel."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        defaults = {"topic_relevance": 4.0, "emotion_resonance": 2.0,
+                    "time_proximity": 1.5, "importance": 1.0,
+                    "content_weight": 1.0, "touch_weight": 1.0,
+                    "semantic_weight": 2.5, "bm25_weight": 1.5}
+        mgr = sh.bucket_mgr
+        current = {
+            "topic_relevance": getattr(mgr, "w_topic", defaults["topic_relevance"]),
+            "emotion_resonance": getattr(mgr, "w_emotion", defaults["emotion_resonance"]),
+            "time_proximity": getattr(mgr, "w_time", defaults["time_proximity"]),
+            "importance": getattr(mgr, "w_importance", defaults["importance"]),
+            "content_weight": getattr(mgr, "content_weight", defaults["content_weight"]),
+            "touch_weight": getattr(mgr, "w_touch", defaults["touch_weight"]),
+            "semantic_weight": getattr(mgr, "w_semantic", defaults["semantic_weight"]),
+            "bm25_weight": getattr(mgr, "w_bm25", defaults["bm25_weight"]),
+        }
+        schema = [
+            {"key": k, "label": k.replace("_", " ").title(), "min": 0.0, "max": 10.0, "step": 0.1,
+             "default": defaults[k]} for k in defaults
+        ]
+        return JSONResponse({"current": current, "defaults": defaults, "schema": schema})
+
+    @mcp.custom_route("/api/scoring-config", methods=["POST"])
+    async def api_scoring_config_update(request: Request) -> Response:
+        """Update a single scoring weight knob."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+        key = body.get("key", "")
+        value = body.get("value")
+        if not key or value is None:
+            return JSONResponse({"error": "missing key or value"}, status_code=400)
+
+        key_map = {
+            "topic_relevance": "w_topic", "emotion_resonance": "w_emotion",
+            "time_proximity": "w_time", "importance": "w_importance",
+            "content_weight": "content_weight", "touch_weight": "w_touch",
+            "semantic_weight": "w_semantic", "bm25_weight": "w_bm25",
+        }
+        attr = key_map.get(key)
+        if not attr:
+            return JSONResponse({"error": f"unknown key: {key}"}, status_code=400)
+        try:
+            setattr(sh.bucket_mgr, attr, float(value))
+        except (ValueError, TypeError):
+            return JSONResponse({"error": "invalid numeric value"}, status_code=400)
+
+        try:
+            import yaml as _yaml
+            config_path = _os_inline.path.join(
+                _os_inline.path.dirname(sh.config.get("buckets_dir", "")), "config.yaml")
+            if _os_inline.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    cfg = _yaml.safe_load(f) or {}
+            else:
+                cfg = {}
+            scoring = cfg.setdefault("scoring_weights", {})
+            scoring[key] = float(value)
+            with open(config_path, "w", encoding="utf-8") as f:
+                _yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
+        except Exception:
+            pass
+
+        defaults = {"topic_relevance": 4.0, "emotion_resonance": 2.0,
+                    "time_proximity": 1.5, "importance": 1.0,
+                    "content_weight": 1.0, "touch_weight": 1.0,
+                    "semantic_weight": 2.5, "bm25_weight": 1.5}
+        mgr = sh.bucket_mgr
+        current = {
+            "topic_relevance": getattr(mgr, "w_topic", defaults["topic_relevance"]),
+            "emotion_resonance": getattr(mgr, "w_emotion", defaults["emotion_resonance"]),
+            "time_proximity": getattr(mgr, "w_time", defaults["time_proximity"]),
+            "importance": getattr(mgr, "w_importance", defaults["importance"]),
+            "content_weight": getattr(mgr, "content_weight", defaults["content_weight"]),
+            "touch_weight": getattr(mgr, "w_touch", defaults["touch_weight"]),
+            "semantic_weight": getattr(mgr, "w_semantic", defaults["semantic_weight"]),
+            "bm25_weight": getattr(mgr, "w_bm25", defaults["bm25_weight"]),
+        }
+        return JSONResponse({"current": current, "ok": True})
+
+    @mcp.custom_route("/api/scoring-config/reset", methods=["POST"])
+    async def api_scoring_config_reset(request: Request) -> Response:
+        """Reset all scoring weights to defaults."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        defaults = {"w_topic": 4.0, "w_emotion": 2.0, "w_time": 1.5,
+                    "w_importance": 1.0, "content_weight": 1.0,
+                    "w_touch": 1.0, "w_semantic": 2.5, "w_bm25": 1.5}
+        for attr, val in defaults.items():
+            setattr(sh.bucket_mgr, attr, val)
+        return JSONResponse({
+            "current": {
+                "topic_relevance": 4.0, "emotion_resonance": 2.0,
+                "time_proximity": 1.5, "importance": 1.0,
+                "content_weight": 1.0, "touch_weight": 1.0,
+                "semantic_weight": 2.5, "bm25_weight": 1.5,
+            },
+            "ok": True,
+        })
+
+    # --- Hit stats (Breath console cold/hot views) ---
+
+    @mcp.custom_route("/api/hit-stats", methods=["GET"])
+    async def api_hit_stats(request: Request) -> Response:
+        """Return per-bucket search hit statistics."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        try:
+            limit = int(request.query_params.get("limit", "50"))
+        except (ValueError, TypeError):
+            limit = 50
+        order = request.query_params.get("order", "desc")
+        include_zero = request.query_params.get("include_zero", "0") == "1"
+
+        stats = _search_log.get_stats()
+        items = _search_log.get_items(order=order, limit=limit)
+
+        enriched = []
+        for item in items:
+            b = await sh.bucket_mgr.get(item["id"])
+            meta = (b.get("metadata", {}) if b else {})
+            enriched.append({
+                "id": item["id"],
+                "name": meta.get("name", item["id"]),
+                "count": item["count"],
+                "surface_count": item["count"],
+                "last_hit": meta.get("last_active", ""),
+                "type": meta.get("type", "dynamic"),
+                "missing": b is None,
+            })
+
+        if include_zero and order == "asc":
+            all_b = await sh.bucket_mgr.list_all(include_archive=False)
+            hit_ids = {it["id"] for it in enriched}
+            for b in all_b:
+                if b["id"] not in hit_ids:
+                    meta = b.get("metadata", {})
+                    enriched.append({
+                        "id": b["id"],
+                        "name": meta.get("name", b["id"]),
+                        "count": 0,
+                        "surface_count": 0,
+                        "last_hit": "",
+                        "type": meta.get("type", "dynamic"),
+                        "missing": False,
+                    })
+
+        stats["items"] = enriched
+        return JSONResponse(stats)
+
+    # --- Recent searches (Breath console trace view) ---
+
+    @mcp.custom_route("/api/recent-searches", methods=["GET"])
+    async def api_recent_searches(request: Request) -> Response:
+        """Return recent search traces."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        try:
+            limit = int(request.query_params.get("limit", "10"))
+        except (ValueError, TypeError):
+            limit = 10
+        return JSONResponse({"items": _search_log.get_recent(limit=limit)})

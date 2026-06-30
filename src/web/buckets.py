@@ -601,6 +601,180 @@ def register(mcp) -> None:
         return JSONResponse({"ok": True, "deleted": len(deleted_names), "failed": failed})
 
 
+    # ---- v2 Console bridge endpoints (iter 2.1) ------------------
+    # These routes serve the v2 React SPA (Console: create / edit / delete / similar).
+
+    @mcp.custom_route("/api/bucket/create", methods=["POST"])
+    async def api_bucket_create(request: Request) -> Response:
+        """Create a new bucket from the v2 Console / WriteDrawer."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+
+        content = (body.get("content") or body.get("title") or "").strip()
+        if not content:
+            return JSONResponse({"error": "content is required"}, status_code=400)
+
+        try:
+            # Step 1: create the bucket with core fields
+            bid = await sh.bucket_mgr.create(
+                content=content,
+                name=body.get("name", ""),
+                tags=body.get("tags", []),
+                importance=body.get("importance", 5),
+                valence=body.get("valence", 0.5),
+                arousal=body.get("arousal", 0.3),
+                bucket_type=body.get("type", "dynamic"),
+                protected=bool(body.get("protected", False)),
+                pinned=bool(body.get("highlight", False)),  # highlight→pin for visibility
+            )
+
+            # Step 2: apply additional fields via update
+            extra = {}
+            if body.get("summary"):
+                extra["summary"] = body["summary"]
+            if body.get("internalized"):
+                extra["digested"] = True
+            if body.get("event_time"):
+                extra["event_time"] = body["event_time"]
+            if body.get("created_by"):
+                extra["created_by"] = body["created_by"]
+            if body.get("highlight"):
+                extra["highlight"] = True
+            if extra:
+                await sh.bucket_mgr.update(bid, **extra)
+
+            return JSONResponse({"ok": True, "id": bid, "name": body.get("name", bid)})
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @mcp.custom_route("/api/bucket/{bucket_id}/update", methods=["POST"])
+    async def api_bucket_update(request: Request) -> Response:
+        """Update a bucket's metadata and content (v2 Console bridge)."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        bucket_id = request.path_params["bucket_id"]
+        bucket = await sh.bucket_mgr.get(bucket_id)
+        if not bucket:
+            return JSONResponse({"error": "not found"}, status_code=404)
+
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+
+        # Map bridge fields → bucket_mgr.update() kwargs
+        kwargs = {}
+        if "content" in body:
+            kwargs["content"] = body["content"]
+        if "name" in body:
+            kwargs["name"] = body["name"]
+        if "summary" in body:
+            kwargs["summary"] = body["summary"]
+        if "tags" in body:
+            kwargs["tags"] = body["tags"]
+        if "importance" in body:
+            kwargs["importance"] = body["importance"]
+        if "protected" in body:
+            kwargs["protected"] = bool(body["protected"])
+        if "highlight" in body:
+            kwargs["highlight"] = bool(body["highlight"])
+        if "internalized" in body:
+            kwargs["digested"] = bool(body["internalized"])
+        if "resolved" in body:
+            kwargs["resolved"] = bool(body["resolved"])
+        if "type" in body:
+            kwargs["type"] = body["type"]
+        if "event_time" in body:
+            kwargs["event_time"] = body["event_time"]
+        if "created_by" in body:
+            kwargs["created_by"] = body["created_by"]
+        if "valence" in body:
+            kwargs["valence"] = body["valence"]
+        if "arousal" in body:
+            kwargs["arousal"] = body["arousal"]
+
+        if not kwargs:
+            return JSONResponse({"ok": True, "id": bucket_id, "note": "no fields to update"})
+
+        try:
+            ok = await sh.bucket_mgr.update(bucket_id, **kwargs)
+            if not ok:
+                return JSONResponse({"error": "update failed"}, status_code=500)
+            return JSONResponse({"ok": True, "id": bucket_id})
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @mcp.custom_route("/api/bucket/{bucket_id}/delete", methods=["POST"])
+    async def api_bucket_delete_post(request: Request) -> Response:
+        """Soft-delete a bucket (POST alias for the v2 Console bridge)."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        bucket_id = request.path_params["bucket_id"]
+        bucket = await sh.bucket_mgr.get(bucket_id)
+        if not bucket:
+            return JSONResponse({"error": "not found"}, status_code=404)
+        ok = await sh.bucket_mgr.delete(bucket_id)
+        if not ok:
+            return JSONResponse({"error": "delete failed"}, status_code=500)
+        return JSONResponse({"ok": True, "id": bucket_id})
+
+    @mcp.custom_route("/api/bucket/{bucket_id}/similar", methods=["GET"])
+    async def api_bucket_similar(request: Request) -> Response:
+        """Find similar buckets by embedding (top-N from query param 'n', default 5)."""
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        bucket_id = request.path_params["bucket_id"]
+        bucket = await sh.bucket_mgr.get(bucket_id)
+        if not bucket:
+            return JSONResponse({"error": "not found"}, status_code=404)
+
+        try:
+            n = int(request.query_params.get("n", "5"))
+        except (ValueError, TypeError):
+            n = 5
+
+        content = bucket.get("content", "")
+        if not content:
+            return JSONResponse({"similar": [], "note": "bucket has no content"}, status_code=200)
+
+        try:
+            results = await sh.embedding_engine.search_similar(content, top_k=n + 1)
+        except Exception as e:
+            return JSONResponse({"error": f"embedding search failed: {e}"}, status_code=500)
+
+        # Filter out the query bucket itself
+        similar = []
+        for bid, sim in results:
+            if bid == bucket_id:
+                continue
+            # Look up basic metadata for each similar bucket
+            b = await sh.bucket_mgr.get(bid)
+            if b:
+                meta = b.get("metadata", {})
+                similar.append({
+                    "id": bid,
+                    "name": meta.get("name", bid),
+                    "similarity": round(sim, 4),
+                    "content_preview": (b.get("content", "") or "")[:120],
+                    "score": sh.decay_engine.calculate_score(meta) if sh.decay_engine else 0,
+                })
+            if len(similar) >= n:
+                break
+
+        return JSONResponse({"similar": similar})
+
     # ---- letter REST endpoints (iter 1.4) ------------------------
     # =============================================================
     # /api/letters、/api/letter、/letters、/api/letter/{id} —— 已拆分到 web/letters.py
