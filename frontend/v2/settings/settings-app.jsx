@@ -1,154 +1,127 @@
-var useSt = React.useState;
-var useEf = React.useEffect;
-
-function h(tag, props) {
-  var children = Array.prototype.slice.call(arguments, 2);
-  return React.createElement.apply(null, [tag, props].concat(children));
-}
+var useSt = React.useState, useEf = React.useEffect, ce = React.createElement;
 
 function SettingsApp() {
-  var _a = useSt(null), status = _a[0], setStatus = _a[1];
-  var _b = useSt(null), config = _b[0], setConfig = _b[1];
-  var _c = useSt(null), tunnel = _c[0], setTunnel = _c[1];
-  var _d = useSt(null), github = _d[0], setGithub = _d[1];
-  var _e = useSt(null), embInfo = _e[0], setEmbInfo = _e[1];
-  var _f = useSt(null), envConfig = _f[0], setEnvConfig = _f[1];
-  var _g = useSt(null), sampling = _g[0], setSampling = _g[1];
-  var _h = useSt(''), humanName = _h[0], setHumanName = _h[1];
-  var _i = useSt(''), hostVault = _i[0], setHostVault = _i[1];
-  var _j = useSt([]), bucketsData = _j[0], setBucketsData = _j[1];
-  var _k = useSt(false), dark = _k[0], setDark = _k[1];
-  var _l = useSt(true), loading = _l[0], setLoading = _l[1];
-  var _m = useSt(''), msg = _m[0], setMsg = _m[1];
-  var _n = useSt(null), version = _n[0], setVersion = _n[1];
-  var _o = useSt(null), localEmb = _o[0], setLocalEmb = _o[1];
+  var a = useSt(null), status = a[0], setStatus = a[1];
+  var b = useSt(null), config = b[0], setConfig = b[1];
+  var c = useSt(null), tunnel = c[0], setTunnel = c[1];
+  var d = useSt(null), github = d[0], setGithub = d[1];
+  var e = useSt(null), embInfo = e[0], setEmbInfo = e[1];
+  var f = useSt(null), envConfig = f[0], setEnvConfig = f[1];
+  var g = useSt(null), sampling = g[0], setSampling = g[1];
+  var h_ = useSt(''), humanName = h_[0], setHumanName = h_[1];
+  var i = useSt(''), hostVault = i[0], setHostVault = i[1];
+  var j = useSt([]), bucketsData = j[0], setBucketsData = j[1];
+  var k = useSt(false), dark = k[0], setDark = k[1];
+  var l = useSt(true), loading = l[0], setLoading = l[1];
+  var m = useSt(''), msg = m[0], setMsg = m[1];
+  var n = useSt(null), version = n[0], setVersion = n[1];
+  var o = useSt(null), localEmb = o[0], setLocalEmb = o[1];
 
-  function showMsg(m) { setMsg(m); setTimeout(function() { setMsg(''); }, 3000); }
+  function showMsg(txt) { setMsg(txt); setTimeout(function() { setMsg(''); }, 3000); }
 
   useEf(function() {
-    async function load() {
-      try {
-        var f = function(url, opt) { return fetch(url, opt).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }); };
-        var results = await Promise.all([
-          f('/api/status', { credentials: 'include' }),
-          f('/api/config', { credentials: 'include' }),
-          f('/api/tunnel/status', { credentials: 'include' }),
-          f('/api/github/status', { credentials: 'include' }),
-          f('/api/embedding/info'),
-          f('/api/env-config', { credentials: 'include' }),
-          f('/api/settings/sampling', { credentials: 'include' }),
-          f('/api/settings/human', { credentials: 'include' }),
-          f('/api/host-vault', { credentials: 'include' }),
-          f('/api/version'),
-          f('/api/buckets', { credentials: 'include' }),
-          f('/api/embedding/local/status?model=bge-m3', { credentials: 'include' }),
-        ]);
-        if (results[0]) setStatus(results[0]);
-        if (results[1]) setConfig(results[1]);
-        if (results[2]) setTunnel(results[2]);
-        if (results[3]) setGithub(results[3]);
-        if (results[4]) setEmbInfo(results[4]);
-        if (results[5]) setEnvConfig(results[5]);
-        if (results[6]) setSampling(results[6]);
-        if (results[7] && results[7].name) setHumanName(results[7].name);
-        if (results[8] && results[8].value != null) setHostVault(results[8].value);
-        if (results[9]) setVersion(results[9]);
-        if (results[10]) setBucketsData(Array.isArray(results[10]) ? results[10] : []);
-        if (results[11]) setLocalEmb(results[11]);
-      } catch (e) {} finally { setLoading(false); }
-    }
-    load();
+    var f_ = function(url, opt) { return fetch(url, opt).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }); };
+    Promise.all([
+      f_('/api/status', { credentials: 'include' }),
+      f_('/api/config', { credentials: 'include' }),
+      f_('/api/tunnel/status', { credentials: 'include' }),
+      f_('/api/github/status', { credentials: 'include' }),
+      f_('/api/embedding/info'),
+      f_('/api/env-config', { credentials: 'include' }),
+      f_('/api/settings/sampling', { credentials: 'include' }),
+      f_('/api/settings/human', { credentials: 'include' }),
+      f_('/api/host-vault', { credentials: 'include' }),
+      f_('/api/version'),
+      f_('/api/buckets', { credentials: 'include' }),
+      f_('/api/embedding/local/status?model=bge-m3', { credentials: 'include' }),
+    ]).then(function(r) {
+      if (r[0]) setStatus(r[0]); if (r[1]) setConfig(r[1]); if (r[2]) setTunnel(r[2]);
+      if (r[3]) setGithub(r[3]); if (r[4]) setEmbInfo(r[4]); if (r[5]) setEnvConfig(r[5]);
+      if (r[6]) setSampling(r[6]); if (r[7] && r[7].name) setHumanName(r[7].name);
+      if (r[8] && r[8].value != null) setHostVault(r[8].value); if (r[9]) setVersion(r[9]);
+      if (r[10]) setBucketsData(Array.isArray(r[10]) ? r[10] : []); if (r[11]) setLocalEmb(r[11]);
+    }).catch(function() {}).finally(function() { setLoading(false); });
   }, []);
 
-  if (loading) return h('div', null,
-    h(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
-    h(window.SharedNav, { active: 'settings' }),
-    h('div', { className: 'st-loading' }, '加载设置…'),
+  if (loading) return ce('div', null,
+    ce(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
+    ce(window.SharedNav, { active: 'settings' }),
+    ce('div', { className: 'st-loading' }, '加载设置…'),
   );
 
-  function Sec(title, sub) {
-    var children = Array.prototype.slice.call(arguments, 2);
-    return h('div', { className: 'st-section' },
-      h('h3', null, title),
-      sub ? h('div', { className: 'st-sub' }, sub) : null,
-      children.length === 1 ? children[0] : h.apply(null, ['div', null].concat(children)),
-    );
+  function Sec(title, sub, kids) {
+    var arr = [ce('h3', null, title)];
+    if (sub) arr.push(ce('div', { className: 'st-sub' }, sub));
+    if (kids) { for (var i_ = 2; i_ < arguments.length; i_++) arr.push(arguments[i_]); }
+    return ce('div', { className: 'st-section' }, ce.apply(null, ['div', null].concat(arr)));
   }
 
-  function Row(label, child) {
-    return h('div', { className: 'st-row' },
-      h('label', null, label),
-      child,
-    );
+  function r(label, child) {
+    var args = [ce('label', null, label)];
+    for (var i_ = 1; i_ < arguments.length; i_++) args.push(arguments[i_]);
+    return ce.apply(null, ['div', { className: 'st-row' }].concat(args));
   }
 
-  function Btn(label, cls, onClick) {
-    return h('button', { className: 'st-btn' + (cls ? ' ' + cls : ''), onClick: onClick }, label);
+  function btn(label, cls, onClick) {
+    return ce('button', { className: 'st-btn' + (cls ? ' ' + cls : ''), onClick: onClick }, label);
   }
 
-  function Badge(on, labels) {
-    var ll = labels || ['ON','OFF'];
-    return h('span', { className: 'st-status ' + (on ? 'on' : 'off') }, on ? ll[0] : ll[1]);
+  function badge(on) {
+    return ce('span', { className: 'st-status ' + (on ? 'on' : 'off') }, on ? 'ON' : 'OFF');
   }
 
-  return h('div', null,
-    h(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
-    h(window.SharedNav, { active: 'settings' }),
-    h('div', { className: 'st-page' },
-      h('div', { className: 'st-hd' }, h('h1', null, '⚙️ 设置')),
-      msg ? h('div', { style: { textAlign: 'center', fontSize: 12, color: 'var(--accent)', marginBottom: 8 } }, msg) : null,
+  return ce('div', null,
+    ce(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
+    ce(window.SharedNav, { active: 'settings' }),
+    ce('div', { className: 'st-page' },
+      ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置')),
+      msg ? ce('div', { style: { textAlign: 'center', fontSize: 12, color: 'var(--accent)', marginBottom: 8 } }, msg) : null,
 
-      // ⓪
       Sec('⓪ 版本 & 更新', 'Version & Update',
-        status ? Row('当前版本', status.version || '—') : null,
-        version ? Row('版本号', version.version || '—') : null,
-        h('div', { style: { marginTop: 6 } }, Btn('检查 GitHub 更新', 'primary', async function() {
-          try { var r = await fetch('/api/version'); var d = await r.json(); alert('当前版本：' + (d.version || '?')); } catch(e) { alert('检查失败'); }
+        status ? r('当前版本', status.version || '—') : null,
+        ce('div', { style: { marginTop: 6 } }, btn('检查 GitHub 更新', 'primary', async function() {
+          try { var rr = await fetch('/api/version'); var dd = await rr.json(); alert('当前版本：' + (dd.version || '?')); } catch(ex) { alert('检查失败'); }
         })),
       ),
 
-      // ①
       Sec('① 我', '个人信息 / Tunnel / 登出',
-        h('div', null,
-          h('div', { className: 'st-sub', style: { marginBottom: 6 } }, '称呼 / 昵称'),
-          Row('称呼', null,
-            h('input', { type: 'text', value: humanName, onChange: function(e) { setHumanName(e.target.value); }, placeholder: '人类',
+        ce('div', null,
+          r('称呼',
+            ce('input', { type: 'text', value: humanName, onChange: function(ev) { setHumanName(ev.target.value); }, placeholder: '人类',
               style: { padding: '6px 10px', border: '0.5px solid var(--line-2)', borderRadius: 6, fontSize: 13, background: 'var(--bg)', color: 'var(--ink)', flex: 1 },
             }),
-            Btn('保存', 'primary', async function() {
+            btn('保存', 'primary', async function() {
               await fetch('/api/settings/human', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: humanName }), credentials: 'include' });
               showMsg('名称已保存');
             }),
           ),
         ),
-        tunnel ? h('div', { style: { marginTop: 16 } },
-          h('div', { className: 'st-sub', style: { marginBottom: 6 } }, 'Cloudflare Tunnel'),
-          h('div', null, '状态：' + (tunnel.running ? '运行中' : (tunnel.configured ? '已配置(未启动)' : '未配置'))),
-          tunnel.url ? h('div', null, 'URL：' + tunnel.url) : null,
-          h('div', { style: { marginTop: 6 } },
+        tunnel ? ce('div', { style: { marginTop: 16 } },
+          ce('div', { className: 'st-sub', style: { marginBottom: 6 } }, 'Cloudflare Tunnel'),
+          ce('div', null, '状态：' + (tunnel.running ? '运行中' : (tunnel.configured ? '已配置(未启动)' : '未配置')) + (tunnel.url ? ' · URL：' + tunnel.url : '')),
+          ce('div', { style: { marginTop: 6 } },
             tunnel.running
-              ? Btn('停止 Tunnel', 'danger', async function() { await fetch('/api/tunnel/stop', { method: 'POST', credentials: 'include' }); location.reload(); })
-              : Btn('启动 Tunnel', 'primary', async function() { await fetch('/api/tunnel/start', { method: 'POST', credentials: 'include' }); location.reload(); }),
+              ? btn('停止 Tunnel', 'danger', async function() { await fetch('/api/tunnel/stop', { method: 'POST', credentials: 'include' }); location.reload(); })
+              : btn('启动 Tunnel', 'primary', async function() { await fetch('/api/tunnel/start', { method: 'POST', credentials: 'include' }); location.reload(); }),
           ),
         ) : null,
-        h('div', { style: { marginTop: 16 } },
-          Btn('退出登录', 'danger', function() { if (confirm('确定退出登录？')) { fetch('/auth/logout', { method: 'POST', credentials: 'include' }); location.reload(); } }),
+        ce('div', { style: { marginTop: 16 } },
+          btn('退出登录', 'danger', function() { if (confirm('确定退出登录？')) { fetch('/auth/logout', { method: 'POST', credentials: 'include' }); location.reload(); } }),
         ),
       ),
 
-      // ②
       Sec('② 服务', 'Service Status',
-        status ? h('div', null,
-          h('div', null, 'Buckets：' + (status.buckets || (status.permanent_count + status.dynamic_count) || '…')),
-          h('div', null, 'Decay Engine：' + Badge(status.decay_engine === 'running', ['运行中','停止'])),
+        status ? ce('div', null,
+          ce('div', null, 'Buckets：' + (status.buckets || (status.permanent_count + status.dynamic_count) || '…')),
+          ce('div', null, 'Decay Engine：', badge(status.decay_engine === 'running')),
         ) : null,
-        h('div', { style: { marginTop: 16 } },
-          h('div', { className: 'st-sub', style: { marginBottom: 6 } }, '宿主机记忆桶目录 (Docker)'),
-          Row('路径', null,
-            h('input', { type: 'text', value: hostVault, onChange: function(e) { setHostVault(e.target.value); }, placeholder: '/Users/you/Obsidian',
+        ce('div', { style: { marginTop: 16 } },
+          ce('div', { className: 'st-sub', style: { marginBottom: 6 } }, '宿主机记忆桶目录 (Docker)'),
+          r('路径',
+            ce('input', { type: 'text', value: hostVault, onChange: function(ev) { setHostVault(ev.target.value); }, placeholder: '/Users/you/Obsidian',
               style: { padding: '6px 10px', border: '0.5px solid var(--line-2)', borderRadius: 6, fontSize: 13, background: 'var(--bg)', color: 'var(--ink)', flex: 1 },
             }),
-            Btn('保存', 'primary', async function() {
+            btn('保存', 'primary', async function() {
               await fetch('/api/host-vault', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: hostVault }), credentials: 'include' });
               showMsg('已保存，需 docker compose down && up');
             }),
@@ -156,29 +129,28 @@ function SettingsApp() {
         ),
       ),
 
-      // ③
       Sec('③ 引擎', '脱水 LLM / 向量化 Embedding / 本地模型',
-        config && config.dehydration ? h('div', { style: { marginBottom: 20 } },
-          h('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginBottom: 4 } }, '脱水 / 打标 LLM'),
-          h('div', null, 'Model：' + (config.dehydration.model || '—') + ' · Tokens：' + (config.dehydration.max_tokens || '—') + ' · Temp：' + (config.dehydration.temperature || '—')),
-          h('div', null, h('code', { style: { fontSize: 11, fontFamily: 'var(--mono)' } }, config.dehydration.base_url || '—')),
-          h('div', null, 'API Key：' + (config.dehydration.api_key_masked || '未设置')),
+        config && config.dehydration ? ce('div', { style: { marginBottom: 20 } },
+          ce('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginBottom: 4 } }, '脱水 / 打标 LLM'),
+          ce('div', null, 'Model：' + (config.dehydration.model || '—') + ' · Tokens：' + (config.dehydration.max_tokens || '—') + ' · Temp：' + (config.dehydration.temperature || '—')),
+          ce('div', null, ce('code', { style: { fontSize: 11, fontFamily: 'var(--mono)' } }, config.dehydration.base_url || '—')),
+          ce('div', null, 'API Key：' + (config.dehydration.api_key_masked || '未设置')),
         ) : null,
-        embInfo ? h('div', { style: { marginBottom: 20 } },
-          h('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginBottom: 4 } }, '向量化 Embedding'),
-          h('div', null, '后端：' + (embInfo.backend || '—') + ' · 模型：' + (embInfo.model || '—') + ' · 维度：' + (embInfo.dimension || '—')),
-          h('div', null, '已索引：' + (embInfo.total_embeddings != null ? embInfo.total_embeddings : '—') + ' 条 · 启用：' + (embInfo.enabled ? 'ON' : 'OFF')),
-          h('div', { style: { marginTop: 6 } }, Btn('补全缺失向量', 'primary', async function() {
-            var r = await fetch('/api/embedding/backfill', { method: 'POST', credentials: 'include' });
-            showMsg(r.ok ? '补全已启动' : '启动失败');
+        embInfo ? ce('div', { style: { marginBottom: 20 } },
+          ce('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginBottom: 4 } }, '向量化 Embedding'),
+          ce('div', null, '后端：' + (embInfo.backend || '—') + ' · 模型：' + (embInfo.model || '—') + ' · 维度：' + (embInfo.dimension || '—')),
+          ce('div', null, '已索引：' + (embInfo.total_embeddings != null ? embInfo.total_embeddings : '—') + ' 条 · 启用：' + (embInfo.enabled ? 'ON' : 'OFF')),
+          ce('div', { style: { marginTop: 6 } }, btn('补全缺失向量', 'primary', async function() {
+            var rr = await fetch('/api/embedding/backfill', { method: 'POST', credentials: 'include' });
+            showMsg(rr.ok ? '补全已启动' : '启动失败');
           })),
         ) : null,
-        localEmb ? h('div', null,
-          h('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginBottom: 4 } }, '本地向量 / Ollama · bge-m3'),
-          h('div', null, 'Ollama：' + Badge(localEmb.ollama_reachable, ['可达','不可达'])),
-          h('div', null, '模型：' + (localEmb.models && localEmb.models.length ? localEmb.models.join(', ') : '无')),
-          localEmb.has_model ? h('div', { style: { marginTop: 6 } },
-            Btn('切换到本地向量', 'primary', async function() {
+        localEmb ? ce('div', null,
+          ce('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginBottom: 4 } }, '本地向量 / Ollama · bge-m3'),
+          ce('div', null, 'Ollama：', badge(localEmb.ollama_reachable)),
+          ce('div', null, '模型：' + (localEmb.models && localEmb.models.length ? localEmb.models.join(', ') : '无')),
+          localEmb.has_model ? ce('div', { style: { marginTop: 6 } },
+            btn('切换到本地向量', 'primary', async function() {
               if (!confirm('切换到本地 Ollama 向量？将触发全量重算')) return;
               await fetch('/api/embedding/migrate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target_backend: 'ollama', api_format: 'ollama', model: 'bge-m3' }), credentials: 'include' });
               showMsg('迁移已启动');
@@ -187,55 +159,51 @@ function SettingsApp() {
         ) : null,
       ),
 
-      // ④
       Sec('④ 桶行为', 'Breath 采样 / 默认参数',
-        sampling ? h('div', null,
-          h('div', null, '加权采样：' + (sampling.enabled ? 'ON' : 'OFF') + ' · top_k：' + (sampling.top_k || '—') + ' · sample_k：' + (sampling.sample_k || '—') + ' · 温度：' + (sampling.temperature || '—')),
+        sampling ? ce('div', null,
+          ce('div', null, '加权采样：' + (sampling.enabled ? 'ON' : 'OFF') + ' · top_k：' + (sampling.top_k || '—') + ' · sample_k：' + (sampling.sample_k || '—') + ' · 温度：' + (sampling.temperature || '—')),
         ) : null,
-        config ? h('div', { style: { marginTop: 8 } },
-          h('div', null, '合并阈值：' + (config.merge_threshold || '—')),
-          config.surfacing ? h('div', null,
-            h('div', null, 'breath 桶数：' + (config.surfacing.breath_max_results || '—') + ' · token：' + (config.surfacing.breath_max_tokens || '—')),
-            h('div', null, 'feel token：' + (config.surfacing.feel_max_tokens || '—')),
+        config ? ce('div', { style: { marginTop: 8 } },
+          ce('div', null, '合并阈值：' + (config.merge_threshold || '—')),
+          config.surfacing ? ce('div', null,
+            ce('div', null, 'breath 桶数：' + (config.surfacing.breath_max_results || '—') + ' · token：' + (config.surfacing.breath_max_tokens || '—')),
+            ce('div', null, 'feel token：' + (config.surfacing.feel_max_tokens || '—')),
           ) : null,
         ) : null,
       ),
 
-      // ⑤
       Sec('⑤ 环境变量', 'OMBRE_* 当前值',
-        envConfig && envConfig.fields ? h('div', null,
-          Object.keys(envConfig.fields).sort().map(function(k) {
-            var v = envConfig.fields[k] || '';
-            var isKey = k.indexOf('_KEY') >= 0;
-            return h('div', { key: k, className: 'st-row', style: { fontSize: 11 } },
-              h('code', { style: { fontFamily: 'var(--mono)', fontSize: 10, minWidth: 200 } }, k),
-              h('span', { style: { color: 'var(--ink-3)' } }, isKey ? (v ? '***已配置' : '未配置') : (v || '—')),
+        envConfig && envConfig.fields ? ce('div', null,
+          Object.keys(envConfig.fields).sort().map(function(kk) {
+            var vv = envConfig.fields[kk] || '';
+            var isKey = kk.indexOf('_KEY') >= 0;
+            return ce('div', { key: kk, className: 'st-row', style: { fontSize: 11 } },
+              ce('code', { style: { fontFamily: 'var(--mono)', fontSize: 10, minWidth: 200 } }, kk),
+              ce('span', { style: { color: 'var(--ink-3)' } }, isKey ? (vv ? '***已配置' : '未配置') : (vv || '—')),
             );
           }),
         ) : null,
       ),
 
-      // ⑥
       Sec('⑥ MCP 配置', 'Claude Desktop 连接端点（主 /mcp + 副 /mcp-extra，突破 claude.ai 5 工具上限）',
-        h('div', { className: 'st-row' },
-          h('code', { style: { fontFamily: 'var(--mono)', fontSize: 12 } }, '/mcp'),
-          h('span', { style: { color: 'var(--ink-3)', fontSize: 12, marginLeft: 8 } }, '主端点'),
+        ce('div', { className: 'st-row' },
+          ce('code', { style: { fontFamily: 'var(--mono)', fontSize: 12 } }, '/mcp'),
+          ce('span', { style: { color: 'var(--ink-3)', fontSize: 12, marginLeft: 8 } }, '主端点'),
         ),
-        h('div', { className: 'st-row' },
-          h('code', { style: { fontFamily: 'var(--mono)', fontSize: 12 } }, '/mcp-extra'),
-          h('span', { style: { color: 'var(--ink-3)', fontSize: 12, marginLeft: 8 } }, '副端点'),
+        ce('div', { className: 'st-row' },
+          ce('code', { style: { fontFamily: 'var(--mono)', fontSize: 12 } }, '/mcp-extra'),
+          ce('span', { style: { color: 'var(--ink-3)', fontSize: 12, marginLeft: 8 } }, '副端点'),
         ),
       ),
 
-      // ⑦
       Sec('⑦ GitHub 同步', '自动备份 + 导入恢复',
-        github ? h('div', null,
-          h('div', null, '状态：' + (github.configured ? '已配置' : '未配置')),
-          github.repo ? h('div', null, 'Repo：' + github.repo) : null,
-          github.last_sync ? h('div', null, '上次同步：' + github.last_sync) : null,
-          h('div', { style: { display: 'flex', gap: 8, marginTop: 8 } },
-            Btn('手动同步', 'primary', async function() { await fetch('/api/github/sync', { method: 'POST', credentials: 'include' }); showMsg('同步已触发'); }),
-            Btn('从 GitHub 导入', '', async function() {
+        github ? ce('div', null,
+          ce('div', null, '状态：' + (github.configured ? '已配置' : '未配置')),
+          github.repo ? ce('div', null, 'Repo：' + github.repo) : null,
+          github.last_sync ? ce('div', null, '上次同步：' + github.last_sync) : null,
+          ce('div', { style: { display: 'flex', gap: 8, marginTop: 8 } },
+            btn('手动同步', 'primary', async function() { await fetch('/api/github/sync', { method: 'POST', credentials: 'include' }); showMsg('同步已触发'); }),
+            btn('从 GitHub 导入', '', async function() {
               if (!confirm('导入会覆盖同名记忆，确认？')) return;
               await fetch('/api/github/import', { method: 'POST', credentials: 'include' }); showMsg('导入已触发');
             }),
@@ -243,12 +211,11 @@ function SettingsApp() {
         ) : null,
       ),
 
-      // ⑧
       Sec('⑧ 危险区', '导出 / 回收站 / 清理',
-        h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
-          h('a', { href: '/api/export', className: 'st-btn primary' }, '导出全部为 ZIP'),
-          h('a', { href: '/v2/console/trash/', className: 'st-btn' }, '打开回收站'),
-          Btn('清空回收站', 'danger', async function() {
+        ce('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+          ce('a', { href: '/api/export', className: 'st-btn primary' }, '导出全部为 ZIP'),
+          ce('a', { href: '/v2/console/trash/', className: 'st-btn' }, '打开回收站'),
+          btn('清空回收站', 'danger', async function() {
             if (!confirm('永久删除回收站所有记忆？不可恢复。')) return;
             await fetch('/api/trash/empty', { method: 'POST', credentials: 'include' });
             showMsg('已清空');
@@ -260,4 +227,4 @@ function SettingsApp() {
 }
 
 var root = document.getElementById('root');
-if (root) ReactDOM.createRoot(root).render(React.createElement(SettingsApp));
+if (root) ReactDOM.createRoot(root).render(ce(SettingsApp));
