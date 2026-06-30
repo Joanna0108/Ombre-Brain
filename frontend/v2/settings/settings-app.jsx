@@ -70,7 +70,7 @@ function SettingsApp() {
 
   // Form state — single object for all editable fields
   var _f = useSt({}), form = _f[0], setForm = _f[1];
-  function setF(key, val) { var n = {}; n[key] = val; setForm(Object.assign({}, form, n)); }
+  function setF(key, val) { setForm(function(prev) { var n = {}; n[key] = val; return Object.assign({}, prev, n); }); }
 
   var sm = function(t) { showMsg(setMsg, t); };
 
@@ -213,13 +213,13 @@ function SettingsApp() {
         var p = { deepseek: { m: 'deepseek-chat', u: 'https://api.deepseek.com/v1' }, gemini: { m: 'gemini-2.5-flash-lite', u: 'https://generativelanguage.googleapis.com/v1beta/openai/' }, siliconflow: { m: 'deepseek-ai/DeepSeek-V3', u: 'https://api.siliconflow.cn/v1' }, anthropic: { m: 'claude-3-5-haiku-latest', u: 'https://api.anthropic.com' } };
         var x = p[ev.target.value]; if (x) { setF('dehyModel', x.m); setF('dehyUrl', x.u); }
       } }, DEHY_PRESETS)),
-      Row('Model', Inp({ value: form.dehyModel || dehy.model || '', onChange: function(ev) { setF('dehyModel', ev.target.value); }, placeholder: 'deepseek-chat' }),
+      Row('Model', Inp({ value: form.dehyModel || dehy.model || '', onChange: function(ev) { setF('dehyModel', ev.target.value); setF('dehyPreset', 'custom'); }, placeholder: 'deepseek-chat' }),
         Btn('获取', '', async function() {
           var r = await fetch('/api/models', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}), credentials: 'include' });
           var d = await r.json(); alert(d.models ? '可用:\n' + d.models.join('\n') : '失败: ' + JSON.stringify(d));
         }),
       ),
-      Row('Base URL', Inp({ value: form.dehyUrl || dehy.base_url || '', onChange: function(ev) { setF('dehyUrl', ev.target.value); }, style: { fontFamily: 'var(--mono)', fontSize: 11 } })),
+      Row('Base URL', Inp({ value: form.dehyUrl || dehy.base_url || '', onChange: function(ev) { setF('dehyUrl', ev.target.value); setF('dehyPreset', 'custom'); }, style: { fontFamily: 'var(--mono)', fontSize: 11 } })),
       Row('API Key', Pwd({ value: form.dehyKeyShow || dehy.api_key_masked || '', onFocus: function() { setF('dehyKeyShow', ''); }, onChange: function(ev) { setF('dehyKey', ev.target.value); setF('dehyKeyShow', ev.target.value); }, placeholder: dehy.api_key_masked || '留空 = 不修改' }),
         Btn('保存', '', async function() { if (!form.dehyKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_COMPRESS_API_KEY: form.dehyKey } }), credentials: 'include' });
           var v = form.dehyKey, m = v.length > 3 ? v[0] + '***' + v[v.length-1] : '***'; setF('dehyKeyShow', m); sm('Key 已保存'); }),
@@ -253,7 +253,7 @@ function SettingsApp() {
         var p = { gemini: { m: 'gemini-embedding-001', u: 'https://generativelanguage.googleapis.com/v1beta/openai/' }, siliconflow: { m: 'BAAI/bge-m3', u: 'https://api.siliconflow.cn/v1' }, ollama: { m: 'bge-m3', u: '' } };
         var x = p[ev.target.value]; if (x) { setF('embModel', x.m); setF('embUrl', x.u); }
       } }, EMB_PRESETS)),
-      Row('Model', Inp({ value: form.embModel || '', onChange: function(ev) { setF('embModel', ev.target.value); }, placeholder: 'gemini-embedding-001' })),
+      Row('Model', Inp({ value: form.embModel || '', onChange: function(ev) { setF('embModel', ev.target.value); setF('embPreset', 'custom'); }, placeholder: 'gemini-embedding-001' })),
       Row('API Key', Pwd({ value: form.embKeyShow || '', onFocus: function() { setF('embKeyShow', ''); }, onChange: function(ev) { setF('embKey', ev.target.value); setF('embKeyShow', ev.target.value); }, placeholder: '留空 = 不修改' }),
         Btn('保存', '', async function() { if (!form.embKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_EMBED_API_KEY: form.embKey } }), credentials: 'include' });
           var v = form.embKey, m = v.length > 3 ? v[0] + '***' + v[v.length-1] : '***'; setF('embKeyShow', m); sm('Key 已保存'); }),
