@@ -254,6 +254,20 @@ function SettingsApp() {
         }),
       ),
 
+      // -- Replay --
+      ce('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginTop: 20, marginBottom: 8 } }, '🎬 Replay 人生电影旁白'),
+      Row('API Key', Pwd({ value: form.replayKey || '', onChange: function(ev) { setF('replayKey', ev.target.value); }, placeholder: '留空 = 不修改' }),
+        Btn('保存', '', async function() { if (!form.replayKey) return; await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: { OMBRE_REPLAY_API_KEY: form.replayKey } }), credentials: 'include' }); sm('已保存'); setF('replayKey', ''); }),
+      ),
+      Row('Base URL', Inp({ value: form.replayUrl || '', onChange: function(ev) { setF('replayUrl', ev.target.value); }, placeholder: 'https://api.deepseek.com/v1', style: { fontFamily: 'var(--mono)', fontSize: 11 } })),
+      Row('Model', Inp({ value: form.replayModel || '', onChange: function(ev) { setF('replayModel', ev.target.value); }, placeholder: 'deepseek-chat' }),
+        Btn('保存', '', async function() {
+          var updates = {}; if (form.replayModel) updates.OMBRE_REPLAY_MODEL = form.replayModel; if (form.replayUrl) updates.OMBRE_REPLAY_BASE_URL = form.replayUrl;
+          if (!Object.keys(updates).length) return;
+          await fetch('/api/env-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates: updates }), credentials: 'include' }); sm('已保存');
+        }),
+      ),
+
       // -- Local --
       localEmb ? ce('div', { style: { marginTop: 16 } },
         ce('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginBottom: 4 } }, '本地 Ollama / bge-m3'),
