@@ -2,6 +2,7 @@ var useSt = React.useState, useEf = React.useEffect, ce = React.createElement;
 
 function SettingsApp() {
   var _a = useSt(null), status = _a[0], setStatus = _a[1];
+  var _b = useSt(null), config = _b[0], setConfig = _b[1];
   var _c = useSt(null), tunnel = _c[0], setTunnel = _c[1];
   var _h = useSt(''), humanName = _h[0], setHumanName = _h[1];
   var _i = useSt(''), hostVault = _i[0], setHostVault = _i[1];
@@ -16,16 +17,18 @@ function SettingsApp() {
     var f_ = function(url, opt) { return fetch(url, opt).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }); };
     Promise.all([
       f_('/api/status', { credentials: 'include' }),
+      f_('/api/config', { credentials: 'include' }),
       f_('/api/tunnel/status', { credentials: 'include' }),
       f_('/api/settings/human', { credentials: 'include' }),
       f_('/api/host-vault', { credentials: 'include' }),
       f_('/api/buckets', { credentials: 'include' }),
     ]).then(function(r) {
       if (r[0]) setStatus(r[0]);
-      if (r[1]) setTunnel(r[1]);
-      if (r[2] && r[2].name) setHumanName(r[2].name);
-      if (r[3] && r[3].value != null) setHostVault(r[3].value);
-      if (r[4]) setBucketsData(Array.isArray(r[4]) ? r[4] : []);
+      if (r[1]) setConfig(r[1]);
+      if (r[2]) setTunnel(r[2]);
+      if (r[3] && r[3].name) setHumanName(r[3].name);
+      if (r[4] && r[4].value != null) setHostVault(r[4].value);
+      if (r[5]) setBucketsData(Array.isArray(r[5]) ? r[5] : []);
     }).catch(function() {}).finally(function() { setLoading(false); });
   }, []);
 
@@ -39,10 +42,10 @@ function SettingsApp() {
     ce(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
     ce(window.SharedNav, { active: 'settings' }),
     ce('div', { className: 'st-page' },
-      ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置 · test6')),
+      ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置 · test7')),
       msg ? ce('div', { style: { textAlign: 'center', fontSize: 12, color: 'var(--accent)', marginBottom: 8 } }, msg) : null,
 
-      // ① (same as test5, working)
+      // ①
       ce('div', { className: 'st-section' },
         ce('h3', null, '① 我'), ce('div', { className: 'st-sub' }, '个人信息 / Tunnel / 登出'),
         ce('div', { className: 'st-row' },
@@ -67,7 +70,7 @@ function SettingsApp() {
         ),
       ),
 
-      // ② (new section - host vault input)
+      // ②
       ce('div', { className: 'st-section' },
         ce('h3', null, '② 服务'), ce('div', { className: 'st-sub' }, 'Service Status'),
         status ? ce('div', null,
@@ -86,11 +89,16 @@ function SettingsApp() {
         ),
       ),
 
-      // simple status (was in test5)
-      status ? ce('div', { className: 'st-section' },
-        ce('h3', null, '⓪ 版本'),
-        ce('div', null, 'Version: ' + (status.version || '?'))
-      ) : null,
+      // ③ LLM (new)
+      ce('div', { className: 'st-section' },
+        ce('h3', null, '③ 引擎'), ce('div', { className: 'st-sub' }, '脱水 LLM / 向量化'),
+        config && config.dehydration ? ce('div', null,
+          ce('h4', { style: { fontFamily: 'var(--serif)', fontSize: 14, marginBottom: 4 } }, '脱水 LLM'),
+          ce('div', { className: 'st-row' }, ce('label', null, 'Model'), ce('span', null, config.dehydration.model || '—')),
+          ce('div', { className: 'st-row' }, ce('label', null, 'Base URL'), ce('code', { style: { fontSize: 11, fontFamily: 'var(--mono)' } }, config.dehydration.base_url || '—')),
+          ce('div', { className: 'st-row' }, ce('label', null, 'API Key'), ce('span', null, config.dehydration.api_key_masked || '未设置')),
+        ) : null,
+      ),
     ),
   );
 }
