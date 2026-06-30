@@ -33,13 +33,19 @@ function SettingsApp() {
     ce(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark }),
     ce(window.SharedNav, { active: 'settings' }),
     ce('div', { className: 'st-page' },
-      ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置 · test3')),
+      ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置 · test4')),
       msg ? ce('div', { style: { textAlign: 'center', fontSize: 12, color: 'var(--accent)', marginBottom: 8 } }, msg) : null,
 
-      // test: button
+      // test: button + input
       ce('div', { className: 'st-section' },
-        ce('h3', null, '测试面板'),
-        ce('button', { className: 'st-btn primary', onClick: function() { alert('clicked'); } }, '点我'),
+        ce('h3', null, '① 我'),
+        ce('div', { className: 'st-row' },
+          ce('label', null, '称呼'),
+          ce('input', { type: 'text', value: humanName, onChange: function(ev) { setHumanName(ev.target.value); }, placeholder: '人类',
+            style: { padding: '6px 10px', border: '0.5px solid var(--line-2)', borderRadius: 6, fontSize: 13, background: 'var(--bg)', color: 'var(--ink)', flex: 1 },
+          }),
+          ce('button', { className: 'st-btn primary', onClick: function() { showMsg('已保存'); } }, '保存'),
+        ),
       ),
 
       status ? ce('div', { className: 'st-section' },
