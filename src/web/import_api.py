@@ -15,6 +15,7 @@ web/import_api.py — 宿主机 vault 设置 / 历史对话导入 / 桶编辑 / 
 
 import os
 import io
+import re as _re
 import json as _json_lib
 import time
 import asyncio
@@ -568,3 +569,100 @@ def register(mcp) -> None:
             {"ok": True, "message": "导入任务已启动，请轮询 GET /api/migrate/status 查看进度"},
             status_code=202,
         )
+
+    # =============================================================
+    # /api/seed-import — 从 scripts/seed-memories.md 批量导入记忆
+    # 不需要密码（本地文件，只读不写配置）
+    # =============================================================
+    @mcp.custom_route("/api/seed-import", methods=["GET"])
+    async def api_seed_import(request: Request) -> Response:
+        from starlette.responses import JSONResponse
+
+        seed_file = os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "seed-memories.md")
+        seed_file = os.path.abspath(seed_file)
+        if not os.path.isfile(seed_file):
+            return JSONResponse({"error": f"文件不存在: {seed_file}"}, status_code=404)
+
+        try:
+            with open(seed_file, "r", encoding="utf-8") as f:
+                text = f.read()
+        except Exception as e:
+            return JSONResponse({"error": f"无法读取文件: {e}"}, status_code=500)
+
+        # 解析 YAML frontmatter blocks
+        blocks = []
+        buf = []
+        for line in text.split("\n"):
+            if line.strip() == "---":
+                if buf:
+                    blocks.append("\n".join(buf)); buf = []
+            else:
+                buf.append(line)
+        if buf:
+            blocks.append("\n".join(buf))
+
+        memories = []
+        for raw in blocks:
+            raw = raw.strip()
+            if not raw.startswith("title:"):
+                continue
+            parts = raw.split("\n\n", 1)
+            header = parts[0]
+            body_text = parts[1].strip() if len(parts) > 1 else ""
+
+            meta = {}
+            for line in header.split("\n"):
+                m = _re.match(r'^(\w+):\s*(.+)$', line.strip())
+                if not m: continue
+                k, v = m.group(1), m.group(2).strip()
+                if v.lower() in ('true','false'):   meta[k] = v.lower() == 'true'
+                elif _re.match(r'^-?\d+\.?\d*$', v): meta[k] = float(v) if '.' in v else int(v)
+                elif v.startswith('['):
+                    meta[k] = [s.strip().strip('"').strip("'") for s in v[1:-1].split(',') if s.strip()]
+                elif v.startswith('"'):
+                    meta[k] = v[1:-1]
+                else:
+                    meta[k] = v
+            meta["_body"] = body_text
+            memories.append(meta)
+
+        created = []
+        errors = []
+        for m in memories:
+            try:
+                name = m.get("title", "")
+                content = m.get("_body", "")
+                typ = m.get("type", "")
+                if typ == "feel":       bt = "feel"
+                elif typ == "plan":     bt = "plan"
+                elif typ == "letter":   bt = "letter"
+                else:                   bt = "dynamic"
+
+                bid = await sh.bucket_mgr.create(
+                    content=content, name=name, tags=m.get("tags", []),
+                    importance=m.get("importance", 5),
+                    valence=m.get("valence", 0.5),
+                    arousal=m.get("arousal", 0.3),
+                    bucket_type=bt, protected=m.get("protected", False),
+                    pinned=m.get("highlight", False),
+                )
+                extra = {}
+                if m.get("anchor"):     extra["anchor"] = True
+                if m.get("highlight"):  extra["highlight"] = True
+                if m.get("domain"):     extra["domain"] = m["domain"]
+                extra["event_time"] = m.get("date", "2026-07-01") + "T12:00:00"
+                if extra:
+                    await sh.bucket_mgr.update(bid, **extra)
+
+                created.append({"id": bid, "name": name})
+            except Exception as e:
+                errors.append({"name": m.get("title", "?"), "error": str(e)[:200]})
+
+        return JSONResponse({
+            "ok": True,
+            "total": len(memories),
+            "created": len(created),
+            "errors": len(errors),
+            "items": created,
+            "error_details": errors if errors else None,
+        })
