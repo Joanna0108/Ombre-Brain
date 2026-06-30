@@ -47,7 +47,11 @@ function SharedNav({ active }) {
     <a key={id} href={href} className={active === id ? 'on' : ''}>{label}</a>
   );
 
-  const divider = <span key="d" style={{
+  const divider1 = <span key="d1" style={{
+    width: '0.5px', background: 'var(--line-2)',
+    margin: '6px 6px', alignSelf: 'stretch'
+  }} />;
+  const divider2 = <span key="d2" style={{
     width: '0.5px', background: 'var(--line-2)',
     margin: '6px 6px', alignSelf: 'stretch'
   }} />;
@@ -76,9 +80,9 @@ function SharedNav({ active }) {
   return (
     <nav className="ob-nav">
       {group1.map(g => link(g.href, g.label, g.id))}
-      {divider}
+      {divider1}
       {group2.map(g => link(g.href, g.label, g.id))}
-      {divider}
+      {divider2}
       {group3.map(g => link(g.href, g.label, g.id))}
     </nav>
   );

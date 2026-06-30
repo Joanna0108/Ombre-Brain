@@ -1,15 +1,10 @@
-// ============================================================
-// about-app.jsx — Ombre Brain 关于页
-// 调用 /api/author 和 /api/status 获取版本和系统信息
-// ============================================================
-
 const { useState, useEffect } = React;
 
 function AboutApp() {
   const [author, setAuthor] = useState(null);
   const [status, setStatus] = useState(null);
   const [bucketsData, setBucketsData] = useState([]);
-  const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
+  const [dark, setDark] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +17,7 @@ function AboutApp() {
         ]);
         setAuthor(ar);
         setStatus(sr);
-        if (br.ok) {
+        if (br && br.ok) {
           const bd = await br.json();
           setBucketsData(Array.isArray(bd) ? bd : []);
         }
@@ -30,43 +25,39 @@ function AboutApp() {
     })();
   }, []);
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
-  }, [dark]);
+  useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : ''); }, [dark]);
 
   const authorName = (author && author.name) ? author.name : 'Joanna';
   const version = (status && status.version) ? status.version : 'v2.x';
   const note = (author && author.note) ? author.note : 'Memory is not storage. Memory is life.';
 
-  return (
-    <div>
-      <window.SharedTopBar data={bucketsData} dark={dark} onDark={setDark} />
-      <window.SharedNav active="about" />
+  if (loading) return React.createElement('div', null,
+    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
+    React.createElement(window.SharedNav, { active: 'about' }),
+    React.createElement('div', { className: 'ab-loading' }, '…'),
+  );
 
-      {loading && <div className="ab-loading">…</div>}
-
-      {!loading && (
-        <div className="ab-page">
-          <h1>Ombre Brain</h1>
-          <div className="ab-version">{version}</div>
-          <div className="ab-note">"{note}"</div>
-          <div className="ab-meta">
-            <div>Built by {authorName}</div>
-            <div style={{ marginTop: '8px' }}>Memory Engine + Dashboard</div>
-            {status && <div style={{ marginTop: '8px' }}>
-              Buckets: {status.buckets || status.permanent_count + status.dynamic_count || '…'}
-              {' · '}Decay: {status.decay_engine || '…'}
-            </div>}
-            <div style={{ marginTop: '16px', color: 'var(--accent)' }}>
-              <a href="https://github.com/Joanna0108/Ombre-Brain" style={{ color: 'var(--accent)', fontSize: '11px' }}>
-                github.com/Joanna0108/Ombre-Brain
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+  return React.createElement('div', null,
+    React.createElement(window.SharedTopBar, { data: bucketsData, dark, onDark: setDark }),
+    React.createElement(window.SharedNav, { active: 'about' }),
+    React.createElement('div', { className: 'ab-page' },
+      React.createElement('h1', null, 'Ombre Brain'),
+      React.createElement('div', { className: 'ab-version' }, version),
+      React.createElement('div', { className: 'ab-note' }, '"' + note + '"'),
+      React.createElement('div', { className: 'ab-meta' },
+        React.createElement('div', null, 'Built by ' + authorName),
+        React.createElement('div', { style: { marginTop: '8px' } }, 'Memory Engine + Dashboard'),
+        status && React.createElement('div', { style: { marginTop: '8px' } },
+          'Buckets: ' + (status.buckets || (status.permanent_count + status.dynamic_count) || '…') + ' · Decay: ' + (status.decay_engine || '…')),
+        React.createElement('div', { style: { marginTop: '16px', color: 'var(--accent)' } },
+          React.createElement('a', { href: 'https://github.com/Joanna0108/Ombre-Brain', style: { color: 'var(--accent)', fontSize: '11px' } }, 'github.com/Joanna0108/Ombre-Brain'),
+        ),
+      ),
+    ),
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<AboutApp />);
+try {
+  const root = document.getElementById('root');
+  if (root) ReactDOM.createRoot(root).render(React.createElement(AboutApp));
+} catch(e) { console.error(e); document.getElementById('root').innerText = 'Error: ' + e.message; }
