@@ -232,7 +232,10 @@ function NetworkApp() {
       posRef.current = { positions: positions, W: W, H: H };
       drawNetwork(ctx, W, H, visibleData.nodes, visibleData.edges, positions, focusId, hoverNode ? hoverNode.id : null);
     };
-    requestAnimationFrame(draw);
+    requestAnimationFrame(function() {
+      console.log('[network] draw, nodes:', visibleData.nodes.length, 'edges:', visibleData.edges.length, 'posKeys:', Object.keys(positions).length, 'canvasW:', canvas.parentElement.clientWidth);
+      try { draw(); } catch(e) { console.error('[network] draw error:', e); }
+    });
   }, [visibleData, positions, focusId, hoverNode]);
 
   // 事件
