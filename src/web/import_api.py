@@ -571,92 +571,112 @@ def register(mcp) -> None:
         )
 
     # =============================================================
-    # /api/seed-import — 从 scripts/seed-memories.md 批量导入记忆
+    # /api/seed-import — 从 scripts/seed-memories.json 批量导入记忆
     # 不需要密码（本地文件，只读不写配置）
     # =============================================================
     @mcp.custom_route("/api/seed-import", methods=["GET"])
     async def api_seed_import(request: Request) -> Response:
         from starlette.responses import JSONResponse
 
-        seed_file = os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "seed-memories.md")
-        seed_file = os.path.abspath(seed_file)
-        if not os.path.isfile(seed_file):
-            return JSONResponse({"error": f"文件不存在: {seed_file}"}, status_code=404)
+        base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
+        json_file = os.path.join(base, "seed-memories.json")
+        md_file = os.path.join(base, "seed-memories.md")
 
-        try:
-            with open(seed_file, "r", encoding="utf-8") as f:
-                text = f.read()
-        except Exception as e:
-            return JSONResponse({"error": f"无法读取文件: {e}"}, status_code=500)
-
-        # 解析 YAML frontmatter blocks
-        blocks = []
-        buf = []
-        for line in text.split("\n"):
-            if line.strip() == "---":
-                if buf:
-                    blocks.append("\n".join(buf)); buf = []
-            else:
-                buf.append(line)
-        if buf:
-            blocks.append("\n".join(buf))
-
-        memories = []
-        for raw in blocks:
-            raw = raw.strip()
-            if not raw.startswith("title:"):
-                continue
-            parts = raw.split("\n\n", 1)
-            header = parts[0]
-            body_text = parts[1].strip() if len(parts) > 1 else ""
-
-            meta = {}
-            for line in header.split("\n"):
-                m = _re.match(r'^(\w+):\s*(.+)$', line.strip())
-                if not m: continue
-                k, v = m.group(1), m.group(2).strip()
-                if v.lower() in ('true','false'):   meta[k] = v.lower() == 'true'
-                elif _re.match(r'^-?\d+\.?\d*$', v): meta[k] = float(v) if '.' in v else int(v)
-                elif v.startswith('['):
-                    meta[k] = [s.strip().strip('"').strip("'") for s in v[1:-1].split(',') if s.strip()]
-                elif v.startswith('"'):
-                    meta[k] = v[1:-1]
-                else:
-                    meta[k] = v
-            meta["_body"] = body_text
-            memories.append(meta)
-
-        created = []
-        errors = []
-        for m in memories:
+        # 优先 JSON
+        memories = None
+        if os.path.isfile(json_file):
             try:
-                name = m.get("title", "")
-                content = m.get("_body", "")
-                typ = m.get("type", "")
-                if typ == "feel":       bt = "feel"
-                elif typ == "plan":     bt = "plan"
-                elif typ == "letter":   bt = "letter"
-                else:                   bt = "dynamic"
+                with open(json_file, "r", encoding="utf-8") as f:
+                    memories = _json_lib.load(f)
+            except Exception as e:
+                return JSONResponse({"error": f"JSON 解析失败: {e}"}, status_code=500)
+
+        # 兜底 MD
+        if not memories and os.path.isfile(md_file):
+            try:
+                with open(md_file, "r", encoding="utf-8") as f:
+                    text = f.read()
+            except Exception as e:
+                return JSONResponse({"error": f"读取失败: {e}"}, status_code=500)
+            blocks, buf = [], []
+            for line in text.split("\n"):
+                if line.strip() == "---":
+                    if buf: blocks.append("\n".join(buf)); buf = []
+                else: buf.append(line)
+            if buf: blocks.append("\n".join(buf))
+            memories = []
+            for raw in blocks:
+                raw = raw.strip()
+                if not raw.startswith("title:"): continue
+                parts = raw.split("\n\n", 1)
+                header = parts[0]
+                body_text = parts[1].strip() if len(parts) > 1 else ""
+                meta = {}
+                for line in header.split("\n"):
+                    m = _re.match(r'^(\w+):\s*(.+)$', line.strip())
+                    if not m: continue
+                    k, v = m.group(1), m.group(2).strip()
+                    if v.lower() in ('true','false'): meta[k] = v.lower() == 'true'
+                    elif _re.match(r'^-?\d+\.?\d*$', v): meta[k] = float(v) if '.' in v else int(v)
+                    elif v.startswith('['): meta[k] = [s.strip().strip('"').strip("'") for s in v[1:-1].split(',') if s.strip()]
+                    elif v.startswith('"'): meta[k] = v[1:-1]
+                    else: meta[k] = v
+                meta["_body"] = body_text
+                # MD → body (simplified)
+                body = {
+                    "name": meta.get("title", ""),
+                    "content": meta.get("_body", ""),
+                    "tags": meta.get("tags", []),
+                    "importance": meta.get("importance", 5),
+                    "protected": meta.get("protected", False),
+                    "highlight": meta.get("highlight", False),
+                    "event_time": meta.get("date", "2026-07-01") + "T12:00:00",
+                }
+                if meta.get("domain"): body["domain"] = meta["domain"]
+                typ = meta.get("type", "")
+                if typ == "feel": body["type"] = "feel"; body["valence"] = meta.get("valence", 0.5); body["arousal"] = meta.get("arousal", 0.3)
+                elif typ == "plan": body["type"] = "plan"
+                elif typ == "letter": body["type"] = "letter"
+                elif typ == "anchor" or meta.get("anchor"): body["anchor"] = True
+                memories.append(body)
+
+        if not memories:
+            return JSONResponse({"error": f"找不到种子文件: {json_file} 或 {md_file}"}, status_code=404)
+
+        created, errors = [], []
+        for body in memories:
+            try:
+                name = body.get("name", body.get("title", ""))
+                content = body.get("content", "")
+                if not content:
+                    errors.append({"name": name, "error": "content is empty"}); continue
+                bt = body.get("type", "dynamic")
+                if bt not in ("dynamic", "feel", "plan", "letter"): bt = "dynamic"
+
+                # summary 兜底
+                if "summary" not in body or not body.get("summary"):
+                    body["summary"] = content[:80].replace("\n", " ") + ("…" if len(content) > 80 else "")
 
                 bid = await sh.bucket_mgr.create(
-                    content=content, name=name, tags=m.get("tags", []),
-                    importance=m.get("importance", 5),
-                    valence=m.get("valence", 0.5),
-                    arousal=m.get("arousal", 0.3),
-                    bucket_type=bt, protected=m.get("protected", False),
-                    pinned=m.get("highlight", False),
-                    event_time=m.get("date", "2026-07-01") + "T12:00:00",
+                    content=content, name=name,
+                    tags=body.get("tags", []),
+                    importance=body.get("importance", 5),
+                    valence=body.get("valence", 0.5),
+                    arousal=body.get("arousal", 0.3),
+                    bucket_type=bt,
+                    protected=body.get("protected", False),
+                    pinned=body.get("highlight", False),
+                    event_time=body.get("event_time", ""),
                 )
                 extra = {}
-                if m.get("anchor"):     extra["anchor"] = True
-                if m.get("highlight"):  extra["highlight"] = True
-                if m.get("domain"):     extra["domain"] = m["domain"]
+                for k in ("anchor", "highlight", "domain", "summary", "weight"):
+                    if body.get(k): extra[k] = body[k]
                 if extra:
                     await sh.bucket_mgr.update(bid, **extra)
 
                 created.append({"id": bid, "name": name})
             except Exception as e:
-                errors.append({"name": m.get("title", "?"), "error": str(e)[:200]})
+                errors.append({"name": body.get("name", body.get("title", "?")), "error": str(e)[:200]})
 
         return JSONResponse({
             "ok": True,

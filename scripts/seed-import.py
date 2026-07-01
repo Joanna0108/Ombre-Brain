@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-导入 seed-memories.md 到 Ombre Brain（Zeabur 部署版）
+导入种子记忆到 Ombre Brain
 
 用法:
-  # Zeabur 部署后自动执行（在 Zeabur 的 post-deploy command 里配）
-  python scripts/seed-import.py
+  python scripts/seed-import.py                 # JSON 优先，没有则读 MD
+  python scripts/seed-import.py --dry-run       # 预览不写入
+  python scripts/seed-import.py --json          # 强制读 seed-memories.json
+  python scripts/seed-import.py --md            # 强制读 seed-memories.md
 
-  # 本地预览
-  python scripts/seed-import.py --dry-run
-
-Zeabur 里需要配环境变量:
-  OMBRE_URL   你的 Zeabur 服务地址 (例 https://xxx.zeabur.app)
-  OMBRE_PWD   Dashboard 密码（如果设了密码的话）
+环境变量:
+  OMBRE_URL   服务地址 (默认 http://localhost:8000)
+  OMBRE_PWD   Dashboard 密码
 """
 
 import json
@@ -25,7 +24,6 @@ from urllib.parse import urljoin
 OMBRE_URL = os.environ.get("OMBRE_URL", "http://localhost:8000")
 OMBRE_PWD = os.environ.get("OMBRE_PWD", "")
 HERE = os.path.dirname(os.path.abspath(__file__))
-SEED_FILE = os.path.join(HERE, "seed-memories.md")
 
 
 def api(path, data=None):
@@ -38,9 +36,20 @@ def api(path, data=None):
         return json.loads(r.read().decode())
 
 
-def parse_memories(filepath):
-    """拆出 YAML 头 + 正文"""
-    text = open(filepath, "r", encoding="utf-8").read()
+def load_json():
+    fp = os.path.join(HERE, "seed-memories.json")
+    if not os.path.isfile(fp):
+        return None
+    with open(fp, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_md():
+    """解析 YAML 头 + 正文（兜底用）"""
+    fp = os.path.join(HERE, "seed-memories.md")
+    if not os.path.isfile(fp):
+        return None
+    text = open(fp, "r", encoding="utf-8").read()
     blocks, buf = [], []
     for line in text.split("\n"):
         if line.strip() == "---":
@@ -59,7 +68,6 @@ def parse_memories(filepath):
         parts = raw.split("\n\n", 1)
         header = parts[0]
         body = parts[1].strip() if len(parts) > 1 else ""
-
         meta = {}
         for line in header.split("\n"):
             m = re.match(r'^(\w+):\s*(.+)$', line.strip())
@@ -78,21 +86,18 @@ def parse_memories(filepath):
     return out
 
 
-def to_body(m):
-    title = m.get("title", "")
+def md_to_body(m):
     body = {
-        "name": title,
+        "name": m.get("title", ""),
         "content": m.get("_body", ""),
         "importance": m.get("importance", 5),
         "tags": m.get("tags", []),
         "protected": m.get("protected", False),
         "highlight": m.get("highlight", False),
-        "internalized": False,
         "event_time": m.get("date", "2026-07-01") + "T12:00:00",
     }
     if m.get("domain"):
         body["domain"] = m["domain"]
-
     typ = m.get("type", "")
     if typ == "feel":
         body["type"] = "feel"
@@ -100,35 +105,57 @@ def to_body(m):
         body["arousal"] = m.get("arousal", 0.3)
     elif typ == "plan":
         body["type"] = "plan"
-        body["_meta"] = {"weight": m.get("weight", 0.5), "status": m.get("status", "active")}
     elif typ == "letter":
         body["type"] = "letter"
     elif typ == "anchor" or m.get("anchor"):
         body["anchor"] = True
-
     body["summary"] = body["content"][:80].replace("\n", " ") + ("…" if len(body["content"]) > 80 else "")
     return body
 
 
+def emoji(b):
+    t = b.get("type", "")
+    if b.get("anchor"):    return " ★"
+    if t == "feel":         return " ♡"
+    if t == "plan":         return " 🎯"
+    if t == "letter":       return " 💌"
+    return ""
+
+
 def main():
-    dry = "--dry-run" in sys.argv
-    memories = parse_memories(SEED_FILE)
-    print(f"📄 {len(memories)} 条记忆 | {OMBRE_URL}\n")
+    args = set(sys.argv[1:])
+    dry = "--dry-run" in args
+    force_json = "--json" in args
+    force_md = "--md" in args
+
+    # 加载
+    memories = None
+    if force_json or (not force_md):
+        memories = load_json()
+        source = "seed-memories.json"
+    if (not memories) or force_md:
+        raw_md = load_md()
+        if raw_md:
+            memories = [md_to_body(m) for m in raw_md]
+            source = "seed-memories.md"
+    if not memories:
+        print("❌ 找不到种子记忆文件 (seed-memories.json 或 .md)")
+        return
+
+    print(f"📄 {len(memories)} 条记忆 ({source}) | {OMBRE_URL}\n")
 
     ok = 0
-    for i, m in enumerate(memories):
-        body = to_body(m)
-        label = body["name"]
-        emoji = ""
-        if body.get("type") == "feel":    emoji = " ♡"
-        elif body.get("anchor"):          emoji = " ★"
-        elif m.get("type") == "plan":     emoji = " 🎯"
-        elif m.get("type") == "letter":   emoji = " 💌"
-
-        print(f"[{i+1:02d}] {label}{emoji}")
-        if dry: ok += 1; continue
-
+    for i, body in enumerate(memories):
+        label = body.get("name", body.get("title", "?"))
+        print(f"[{i+1:02d}] {label}{emoji(body)}")
+        if dry:
+            ok += 1
+            continue
         try:
+            # summary 兜底
+            if "summary" not in body or not body.get("summary"):
+                cnt = body.get("content", "")
+                body["summary"] = cnt[:80].replace("\n", " ") + ("…" if len(cnt) > 80 else "")
             resp = api("/api/bucket/create", body)
             print(f"     ✅ {resp.get('id','?')}")
             ok += 1
