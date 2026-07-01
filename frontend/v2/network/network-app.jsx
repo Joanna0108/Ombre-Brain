@@ -1,399 +1,289 @@
-// ============================================================
-// network-app.jsx — Ombre Brain 记忆网络（概念共现图）
-// D3.js v7 力导向布局 + React 状态管理 + v2 主题系统
-// ============================================================
+// network-app.jsx — Canvas 版记忆网络（跟原版 dashboard 逻辑一致，v2 冷紫色调）
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
-const { useState, useEffect, useRef, useCallback, useMemo } = React;
+var C2 = { accent: '#6e4f9a', rose: '#d291b3', gold: '#b8a3d8', sage: '#8a8898', bg: '#f4f3f7', paper: '#ffffff', ink: '#1a1922', ink3: '#8c889c', ink4: '#b8aecf', line: 'rgba(26,25,34,0.12)' };
+function nodeColor(kind) { return kind === 'tag' ? C2.gold : kind === 'mixed' ? C2.rose : C2.accent; }
 
-// ============================================================
-// Constants
-// ============================================================
-const KIND_COLORS = {
-  wiki: '#7c6fb8',    // accent purple
-  tag: '#d4a85f',     // gold
-  mixed: '#d291b3',   // rose
-};
-const KIND_LABELS = { wiki: '[[ 双链 ]]', tag: '# 标签', mixed: '双链+标签' };
-const NODE_R_MIN = 5;
-const NODE_R_MAX = 22;
+// ── 力导向布局（算完就停）──
+function computeLayout(nodes, edges, W, H, focusId) {
+  var cx = W / 2, cy = H / 2;
+  var pos = {};
+  nodes.forEach(function(n, i) {
+    if (focusId && n.id === focusId) { pos[n.id] = { x: cx, y: cy }; return; }
+    var a = (i / nodes.length) * Math.PI * 2;
+    var r = Math.min(W, H) * 0.32;
+    pos[n.id] = { x: cx + Math.cos(a) * r + (Math.random() - 0.5) * 40, y: cy + Math.sin(a) * r + (Math.random() - 0.5) * 40 };
+  });
 
-// ============================================================
-// Main App Component
-// ============================================================
+  var nodeArr = nodes;
+  var iters = Math.min(120, 30 + nodeArr.length * 2);
+  for (var iter = 0; iter < iters; iter++) {
+    // 节点间斥力
+    for (var i = 0; i < nodeArr.length; i++) {
+      for (var j = i + 1; j < nodeArr.length; j++) {
+        var pa = pos[nodeArr[i].id], pb = pos[nodeArr[j].id];
+        if (!pa || !pb) continue;
+        var dx = pb.x - pa.x, dy = pb.y - pa.y;
+        var dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+        var force = 1400 / (dist * dist);
+        if (dist < 30) force *= 2;
+        dx = (dx / dist) * force; dy = (dy / dist) * force;
+        pa.x -= dx; pa.y -= dy; pb.x += dx; pb.y += dy;
+      }
+    }
+    // 边拉力
+    edges.forEach(function(e) {
+      var pa = pos[e.source], pb = pos[e.target];
+      if (!pa || !pb) return;
+      var dx = pb.x - pa.x, dy = pb.y - pa.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      var ideal = nodes.length < 20 ? 140 : 110;
+      var pull = Math.min(1, (e.weight || 1) / 4);
+      var force = (dist - ideal) * 0.014 * pull;
+      dx = (dx / Math.max(1, dist)) * force; dy = (dy / Math.max(1, dist)) * force;
+      pa.x += dx; pa.y += dy; pb.x -= dx; pb.y -= dy;
+    });
+    // 向心力
+    nodeArr.forEach(function(n) {
+      if (n.id === focusId) return;
+      var p = pos[n.id]; if (!p) return;
+      p.x += (cx - p.x) * 0.005;
+      p.y += (cy - p.y) * 0.005;
+    });
+  }
+  // 限制在画布内
+  nodeArr.forEach(function(n) {
+    var p = pos[n.id]; if (!p) return;
+    var r = nodeRadius(n);
+    p.x = Math.max(r, Math.min(W - r, p.x));
+    p.y = Math.max(r, Math.min(H - r, p.y));
+  });
+  return pos;
+}
+
+function nodeRadius(n) { return Math.max(3, Math.min(9, 1.8 + Math.sqrt(n.freq || 1) * 1.3)); }
+
+// ── 绘制网络 ──
+function drawNetwork(ctx, W, H, nodes, edges, positions, focusId, hoverId) {
+  var cx = W / 2, cy = H / 2;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = C2.paper; ctx.fillRect(0, 0, W, H);
+
+  // 网格背景
+  var GRID = 22, MAJOR = 5;
+  ctx.beginPath();
+  for (var gx = GRID; gx < W; gx += GRID) {
+    if (Math.round(gx / GRID) % MAJOR === 0) continue;
+    ctx.moveTo(gx, 0); ctx.lineTo(gx, H);
+  }
+  for (var gy = GRID; gy < H; gy += GRID) {
+    if (Math.round(gy / GRID) % MAJOR === 0) continue;
+    ctx.moveTo(0, gy); ctx.lineTo(W, gy);
+  }
+  ctx.strokeStyle = 'rgba(26,25,34,0.06)'; ctx.lineWidth = 0.5; ctx.stroke();
+
+  ctx.beginPath();
+  for (var gx2 = 0; gx2 <= W; gx2 += GRID * MAJOR) { ctx.moveTo(gx2, 0); ctx.lineTo(gx2, H); }
+  for (var gy2 = 0; gy2 <= H; gy2 += GRID * MAJOR) { ctx.moveTo(0, gy2); ctx.lineTo(W, gy2); }
+  ctx.strokeStyle = 'rgba(26,25,34,0.10)'; ctx.lineWidth = 0.7; ctx.stroke();
+
+  if (!nodes.length) {
+    ctx.fillStyle = C2.ink4; ctx.font = '14px serif'; ctx.textAlign = 'center';
+    ctx.fillText('还没有 [[双链]] 或 #tag', cx, cy); return;
+  }
+
+  // 边
+  edges.forEach(function(e) {
+    var pa = positions[e.source], pb = positions[e.target];
+    if (!pa || !pb) return;
+    var isF = e.source === focusId || e.target === focusId;
+    var alpha = isF ? 0.4 : 0.12;
+    ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+    ctx.strokeStyle = 'rgba(110,79,154,' + alpha + ')'; ctx.lineWidth = isF ? 1.0 : 0.5; ctx.stroke();
+  });
+
+  // 节点
+  nodes.forEach(function(n) {
+    var p = positions[n.id]; if (!p) return;
+    var isFocus = n.id === focusId, isHover = n.id === hoverId;
+    var r = nodeRadius(n);
+    if (isFocus) r *= 1.3; else if (isHover) r *= 1.15;
+    var col = nodeColor(n.kind);
+
+    // 光晕
+    var glowR = r + (isFocus ? 12 : isHover ? 8 : 4);
+    var glowA = isFocus ? 0.25 : isHover ? 0.18 : 0.05;
+    var grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+    grd.addColorStop(0, col.replace('rgb', 'rgba').replace(')', ', ' + glowA + ')'));
+    grd.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2); ctx.fillStyle = grd; ctx.fill();
+
+    // 点
+    var alpha = isFocus || isHover ? 0.95 : 0.65;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = col.replace('rgb', 'rgba').replace(')', ', ' + alpha + ')'); ctx.fill();
+
+    // 焦点环
+    if (isFocus || n.anchor) {
+      ctx.beginPath(); ctx.arc(p.x, p.y, r + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = isFocus ? C2.accent : C2.gold; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+
+    // 标签
+    if (isFocus || (n.freq >= 4 && nodes.length < 40)) {
+      ctx.fillStyle = isFocus ? C2.accent : C2.ink4;
+      ctx.font = (isFocus ? 'bold ' : '') + '10px sans-serif';
+      ctx.textAlign = 'center';
+      var label = n.label || n.id;
+      if (label.length > 12) label = label.slice(0, 12) + '…';
+      ctx.fillText((n.kind === 'tag' ? '#' : '') + label, p.x, p.y + r + 14);
+    }
+  });
+
+  // 提示信息
+  if (focusId) {
+    ctx.fillStyle = C2.accent; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(nodes.length + ' nodes · 点击节点返回全局', cx, 22);
+  } else {
+    ctx.fillStyle = C2.ink4; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('TOP ' + nodes.length + ' NODES · 悬浮看详情 · 点击展开邻居', cx, 22);
+  }
+}
+
+// ═══════════════════════════════════════
 function NetworkApp() {
-  // ---- State ----
-  const [graph, setGraph] = useState(null);
-  const [bucketsData, setBucketsData] = useState([]);
-  const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [focusedNode, setFocusedNode] = useState(null);  // clicked concept
-  const [hoveredNode, setHoveredNode] = useState(null);  // hovered concept
-  const [searchQ, setSearchQ] = useState('');
-  const [kindFilter, setKindFilter] = useState(null);    // null=all, 'wiki', 'tag', 'mixed'
-  const [layoutMode, setLayoutMode] = useState('force'); // 'force' | 'ring'
-  const [showLabels, setShowLabels] = useState('smart'); // 'smart' | 'always' | 'never'
-  const [zoom, setZoom] = useState(1);
-  const [rightOpen, setRightOpen] = useState(false);
+  var [graph, setGraph] = useState(null);
+  var [bucketsData, setBucketsData] = useState([]);
+  var [dark, setDark] = useState(false);
+  var [loading, setLoading] = useState(true);
+  var [error, setError] = useState(null);
+  var [focusId, setFocusId] = useState(null);
+  var [hoverNode, setHoverNode] = useState(null);
+  var [hoverPos, setHoverPos] = useState(null); // { x, y } for tooltip
 
-  const svgRef = useRef(null);
-  const tooltipRef = useRef(null);
-  const simulationRef = useRef(null);
+  var canvasRef = useRef(null);
+  var adjRef = useRef({});
+  var posRef = useRef({});
 
-  // ---- Data Fetch ----
-  useEffect(() => {
-    (async () => {
+  // 加载数据
+  useEffect(function() {
+    (async function() {
       try {
-        const [gr, br] = await Promise.all([
+        var [gr, br] = await Promise.all([
           fetch('/api/network?mode=concept', { credentials: 'include' }),
           fetch('/api/buckets', { credentials: 'include' }),
         ]);
         if (!gr.ok) throw new Error('HTTP ' + gr.status);
-        const graphData = await gr.json();
-        setGraph(graphData);
-        if (br.ok) {
-          const bd = await br.json();
-          setBucketsData(Array.isArray(bd) ? bd : []);
-        }
-      } catch (e) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
+        var gd = await gr.json();
+        setGraph(gd);
+        if (br.ok) { var bd = await br.json(); setBucketsData(Array.isArray(bd) ? bd : []); }
+        // 建邻接表
+        var adj = {};
+        (gd.nodes || []).forEach(function(n) { adj[n.id] = []; });
+        (gd.edges || []).forEach(function(e) { if (adj[e.source]) adj[e.source].push(e.target); if (adj[e.target]) adj[e.target].push(e.source); });
+        adjRef.current = adj;
+      } catch (e) { setError(e.message); } finally { setLoading(false); }
     })();
   }, []);
 
-  // Sync dark mode
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
-  }, [dark]);
-
-  // ---- Filtered graph ----
-  const filtered = useMemo(() => {
+  // 可见节点
+  var visibleData = useMemo(function() {
     if (!graph) return { nodes: [], edges: [] };
-
-    let nodes = graph.nodes || [];
-    let edges = graph.edges || [];
-
-    // Kind filter
-    if (kindFilter) {
-      const keepIds = new Set(nodes.filter(n => n.kind === kindFilter).map(n => n.id));
-      nodes = nodes.filter(n => keepIds.has(n.id));
-      edges = edges.filter(e => keepIds.has(e.source) && keepIds.has(e.target));
+    var allN = graph.nodes || [], allE = graph.edges || [];
+    if (!focusId) {
+      var sorted = allN.slice().sort(function(a, b) { return (b.freq || 1) - (a.freq || 1); });
+      var ids = new Set(sorted.slice(0, 30).map(function(n) { return n.id; }));
+      return { nodes: allN.filter(function(n) { return ids.has(n.id); }), edges: allE.filter(function(e) { return ids.has(e.source) && ids.has(e.target); }) };
     }
-
-    // Search filter — match label
-    if (searchQ.trim()) {
-      const q = searchQ.trim().toLowerCase();
-      const matchIds = new Set(nodes.filter(n => n.label.toLowerCase().includes(q)).map(n => n.id));
-      // Include 1-hop neighbors
-      edges.forEach(e => {
-        if (matchIds.has(e.source)) matchIds.add(e.target);
-        if (matchIds.has(e.target)) matchIds.add(e.source);
-      });
-      nodes = nodes.filter(n => matchIds.has(n.id));
-      edges = edges.filter(e => matchIds.has(e.source) && matchIds.has(e.target));
+    // focus 模式：BFS 邻居
+    var visited = new Set([focusId]);
+    var frontier = [focusId];
+    for (var d = 0; d < 2; d++) {
+      var next = [];
+      frontier.forEach(function(id) { (adjRef.current[id] || []).forEach(function(nb) { if (!visited.has(nb)) { visited.add(nb); next.push(nb); } }); });
+      frontier = next;
+      if (!frontier.length) break;
     }
+    return { nodes: allN.filter(function(n) { return visited.has(n.id); }), edges: allE.filter(function(e) { return visited.has(e.source) && visited.has(e.target); }) };
+  }, [graph, focusId]);
 
-    // Focus mode
-    if (focusedNode) {
-      const keepIds = new Set([focusedNode.id]);
-      edges.forEach(e => {
-        if (e.source === focusedNode.id) keepIds.add(e.target);
-        if (e.target === focusedNode.id) keepIds.add(e.source);
-      });
-      nodes = nodes.filter(n => keepIds.has(n.id));
-      edges = edges.filter(e => keepIds.has(e.source) && keepIds.has(e.target));
-    }
+  // 布局
+  var positions = useMemo(function() {
+    if (!graph || !visibleData.nodes.length) return {};
+    var W = 900, H = 550;
+    // 尝试获取 canvas 尺寸
+    if (canvasRef.current) { W = canvasRef.current.parentElement.clientWidth || 900; H = Math.min(W * 0.62, 550); }
+    return computeLayout(visibleData.nodes, visibleData.edges, W, H, focusId);
+  }, [visibleData, focusId]);
 
-    return { nodes, edges };
-  }, [graph, kindFilter, searchQ, focusedNode]);
+  // 绘制
+  useEffect(function() {
+    var canvas = canvasRef.current; if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.parentElement.getBoundingClientRect();
+    var W = rect.width, H = Math.min(W * 0.62, 550);
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr);
+    posRef.current = { positions: positions, W: W, H: H };
+    drawNetwork(ctx, W, H, visibleData.nodes, visibleData.edges, positions, focusId, hoverNode ? hoverNode.id : null);
+  }, [visibleData, positions, focusId, hoverNode]);
 
-  // ---- D3 Force Simulation ----
-  useEffect(() => {
-    if (!svgRef.current || !graph || filtered.nodes.length === 0) return;
+  // 事件
+  var handleMouseMove = function(e) {
+    var p = posRef.current; if (!p.positions || !Object.keys(p.positions).length) return;
+    var rect = canvasRef.current.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    var found = null;
+    visibleData.nodes.forEach(function(n) {
+      var pp = p.positions[n.id]; if (!pp) return;
+      var r = nodeRadius(n) + 6;
+      if (Math.hypot(mx - pp.x, my - pp.y) < r) found = n;
+    });
+    setHoverNode(found);
+    setHoverPos(found ? { x: e.clientX, y: e.clientY } : null);
+  };
+  var handleMouseLeave = function() { setHoverNode(null); setHoverPos(null); };
+  var handleClick = function(e) {
+    var p = posRef.current; if (!p.positions) return;
+    var rect = canvasRef.current.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    visibleData.nodes.forEach(function(n) {
+      var pp = p.positions[n.id]; if (!pp) return;
+      var r = nodeRadius(n) + 6;
+      if (Math.hypot(mx - pp.x, my - pp.y) < r) {
+        setFocusId(function(prev) { return prev === n.id ? null : n.id; });
+      }
+    });
+  };
 
-    const svg = d3.select(svgRef.current);
-    const width = svgRef.current.clientWidth || 900;
-    const height = svgRef.current.clientHeight || 600;
-    const cx = width / 2;
-    const cy = height / 2;
+  var topbar = React.createElement(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark });
+  var nav = React.createElement(window.SharedNav, { active: 'network' });
+  if (loading) return React.createElement('div', null, topbar, nav, React.createElement('div', { className: 'nw-loading' }, '载入记忆网络…'));
+  if (error) return React.createElement('div', null, topbar, nav, React.createElement('div', { className: 'nw-loading' }, '加载失败: ' + error));
 
-    // Clear previous
-    svg.selectAll('g.force-layer').remove();
-    const g = svg.append('g').attr('class', 'force-layer');
-
-    // Prepare data
-    const nodes = filtered.nodes.map(n => ({
-      ...n,
-      r: NODE_R_MIN + Math.min((n.freq || 1) - 1, 10) * 1.5,
-    }));
-
-    // Build edge lookup
-    const nodeMap = new Map(nodes.map(n => [n.id, n]));
-    const links = filtered.edges
-      .map(e => ({ source: e.source, target: e.target, weight: e.weight || 1 }))
-      .filter(l => nodeMap.has(l.source) && nodeMap.has(l.target));
-
-    // --- Simulation ---
-    const sim = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id(d => d.id).distance(d => 140 - Math.min(60, (d.weight || 1) * 10)).strength(d => 0.03 + (d.weight || 1) * 0.01))
-      .force('charge', d3.forceManyBody().strength(d => -80 - (d.r || 8) * 8))
-      .force('center', d3.forceCenter(cx, cy))
-      .force('collision', d3.forceCollide().radius(d => (d.r || 8) + 3))
-      .alphaDecay(0.02)
-      .on('tick', () => {
-        // Clamp nodes within bounds
-        nodes.forEach(d => {
-          d.x = Math.max(d.r, Math.min(width - d.r, d.x));
-          d.y = Math.max(d.r, Math.min(height - d.r, d.y));
-        });
-
-        // Render links
-        const linkSel = g.selectAll('line.nw-edge').data(links, d => d.source.id + '|' + d.target.id);
-        linkSel.join(
-          enter => enter.append('line').attr('class', 'nw-edge'),
-          update => update,
-          exit => exit.remove()
-        )
-          .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-          .attr('x2', d => d.target.x).attr('y2', d => d.target.y)
-          .attr('stroke', 'var(--line)')
-          .attr('stroke-width', d => Math.max(0.5, Math.min(3, (d.weight || 1) * 0.6)));
-
-        // Render nodes
-        const nodeSel = g.selectAll('g.nw-node').data(nodes, d => d.id);
-        const nodeEnter = nodeSel.enter().append('g').attr('class', 'nw-node');
-
-        nodeEnter.append('circle')
-          .attr('class', 'nw-node-bg')
-          .attr('r', d => d.r + 3)
-          .attr('fill', 'transparent')
-          .attr('stroke', 'transparent');
-
-        nodeEnter.append('circle')
-          .attr('class', 'nw-node-core')
-          .attr('r', d => d.r);
-
-        nodeEnter.append('text')
-          .attr('class', 'nw-node-label')
-          .attr('text-anchor', 'middle')
-          .attr('dy', d => d.r + 13)
-          .attr('font-size', '10px')
-          .attr('fill', 'var(--ink-dim)')
-          .text(d => d.label);
-
-        const nodeMerge = nodeEnter.merge(nodeSel);
-        nodeMerge.attr('transform', d => `translate(${d.x},${d.y})`);
-
-        nodeMerge.select('circle.nw-node-core')
-          .attr('fill', d => KIND_COLORS[d.kind] || 'var(--accent)')
-          .attr('opacity', d => {
-            if (!focusedNode && !searchQ.trim()) return 0.85;
-            // In focus/search mode, all visible nodes are relevant
-            return 0.9;
-          });
-
-        nodeMerge.select('text.nw-node-label')
-          .style('display', () => {
-            if (showLabels === 'never') return 'none';
-            if (showLabels === 'always') return 'block';
-            // Smart: show for freq >= 3 or focused
-            return (d.freq >= 3 || (focusedNode && d.id === focusedNode.id)) ? 'block' : 'none';
-          });
-
-        nodeSel.exit().remove();
-      });
-
-    simulationRef.current = sim;
-
-    // Zoom handler
-    const zoomHandler = d3.zoom()
-      .scaleExtent([0.2, 4])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-        setZoom(Math.round(event.transform.k * 100) / 100);
-      });
-
-    svg.call(zoomHandler);
-
-    return () => {
-      sim.stop();
-    };
-  }, [filtered, focusedNode, showLabels, searchQ, graph]);
-
-  // ---- Interaction handlers ----
-  const handleNodeHover = useCallback((node, evt) => {
-    setHoveredNode(node);
-    const tip = tooltipRef.current;
-    if (!tip || !node) { if (tip) tip.style.display = 'none'; return; }
-    tip.style.display = 'block';
-    tip.style.left = (evt.clientX + 16) + 'px';
-    tip.style.top = (evt.clientY - 10) + 'px';
-    tip.innerHTML = `
-      <div class="nw-tt-label">${node.label}</div>
-      <div class="nw-tt-meta">${KIND_LABELS[node.kind] || node.kind} · 出现 ${node.freq} 次 · ${(node.buckets || []).length} 条记忆</div>
-    `;
-  }, []);
-
-  const handleNodeClick = useCallback((node) => {
-    if (focusedNode && focusedNode.id === node.id) {
-      setFocusedNode(null);
-      setRightOpen(false);
-    } else {
-      setFocusedNode(node);
-      setRightOpen(true);
-    }
-  }, [focusedNode]);
-
-  // ---- Stats ----
-  const stats = useMemo(() => {
-    if (!graph) return { nodes: 0, edges: 0, buckets: 0 };
-    const allBuckets = new Set();
-    (graph.nodes || []).forEach(n => (n.buckets || []).forEach(bid => allBuckets.add(bid)));
-    return {
-      nodes: (graph.nodes || []).length,
-      edges: (graph.edges || []).length,
-      buckets: allBuckets.size,
-    };
-  }, [graph]);
-
-  // ---- Render ----
-  return (
-    <div>
-      <window.SharedTopBar data={bucketsData} dark={dark} onDark={setDark} />
-      <window.SharedNav active="network" />
-
-      {/* Main */}
-      <div className="nw-main">
-        {/* Left Panel */}
-        <aside className="nw-left">
-          <div>
-            <label>搜索概念</label>
-            <input type="text" placeholder="输入概念名…" value={searchQ}
-              onChange={e => { setSearchQ(e.target.value); setFocusedNode(null); }} />
-          </div>
-
-          <div>
-            <h3>类型过滤</h3>
-            <div className="nw-filter-chips">
-              <span className={'nw-chip' + (!kindFilter ? ' on' : '')} onClick={() => setKindFilter(null)}>全部</span>
-              <span className={'nw-chip' + (kindFilter === 'wiki' ? ' on' : '')} onClick={() => setKindFilter(kindFilter === 'wiki' ? null : 'wiki')}>[[ 双链 ]]</span>
-              <span className={'nw-chip' + (kindFilter === 'tag' ? ' on' : '')} onClick={() => setKindFilter(kindFilter === 'tag' ? null : 'tag')}># 标签</span>
-              <span className={'nw-chip' + (kindFilter === 'mixed' ? ' on' : '')} onClick={() => setKindFilter(kindFilter === 'mixed' ? null : 'mixed')}>混合</span>
-            </div>
-          </div>
-
-          <div>
-            <h3>图统计</h3>
-            <div className="nw-stats">
-              概念节点 <span>{stats.nodes}</span> · 共现边 <span>{stats.edges}</span> · 涉及记忆 <span>{stats.buckets}</span>
-            </div>
-          </div>
-
-          <div>
-            <h3>图例</h3>
-            <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
-              {Object.entries(KIND_COLORS).map(([k, color]) => (
-                <div key={k} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'12px',color:'var(--ink-dim)'}}>
-                  <span style={{width:12,height:12,borderRadius:'50%',background:color,display:'inline-block'}}></span>
-                  {KIND_LABELS[k]}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {focusedNode && (
-            <div>
-              <h3>已聚焦</h3>
-              <div style={{fontSize:'13px'}}>
-                <strong style={{color:KIND_COLORS[focusedNode.kind]}}>{focusedNode.label}</strong>
-                <div style={{fontSize:'11px',color:'var(--ink-dim)',marginTop:'4px'}}>
-                  {(focusedNode.buckets || []).length} 条记忆 · 出现 {focusedNode.freq} 次
-                </div>
-                <button style={{marginTop:'8px',fontSize:'11px',padding:'3px 10px',borderRadius:'6px',border:'1px solid var(--line)',background:'var(--bg)',color:'var(--ink-dim)',cursor:'pointer'}}
-                  onClick={() => { setFocusedNode(null); setRightOpen(false); }}>取消聚焦</button>
-              </div>
-            </div>
-          )}
-        </aside>
-
-        {/* Canvas Area */}
-        <div className="nw-canvas-wrap">
-          {loading && <div className="nw-loading">绘制记忆星座…</div>}
-          {error && <div className="nw-loading">加载失败: {error}</div>}
-          <svg ref={svgRef}></svg>
-          <div className="nw-tooltip" ref={tooltipRef}></div>
-        </div>
-
-        {/* Right Drawer */}
-        <aside className={'nw-right' + (rightOpen ? ' open' : '')}>
-          {focusedNode && (
-            <div className="nw-right-inner">
-              <h3 style={{color: KIND_COLORS[focusedNode.kind]}}>{focusedNode.label}</h3>
-              <div className="nw-meta">
-                {KIND_LABELS[focusedNode.kind]} · 出现 {focusedNode.freq} 次 · {(focusedNode.buckets || []).length} 条记忆
-                {focusedNode.anchor && ' · ⚓ 锚点'}
-              </div>
-              <button style={{marginTop:'8px',marginBottom:'16px',fontSize:'11px',padding:'4px 12px',borderRadius:'6px',border:'1px solid var(--line)',background:'var(--bg)',color:'var(--ink-dim)',cursor:'pointer'}}
-                onClick={() => { setRightOpen(false); }}>关闭</button>
-
-              <div style={{fontSize:'12px',color:'var(--ink-dim)',marginBottom:'8px'}}>关联记忆</div>
-              <div className="nw-bucket-list">
-                {(focusedNode.buckets || []).slice(0, 20).map(bid => (
-                  <BucketItem key={bid} bucketId={bid} />
-                ))}
-                {(focusedNode.buckets || []).length > 20 && (
-                  <div style={{fontSize:'11px',color:'var(--ink-dim)',textAlign:'center',padding:'8px'}}>
-                    还有 {focusedNode.buckets.length - 20} 条…
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </aside>
-      </div>
-
-      {/* Bottom Bar */}
-      <div className="nw-bottombar">
-        <button className={layoutMode === 'force' ? 'on' : ''} onClick={() => setLayoutMode('force')}>力导向</button>
-        <button className={layoutMode === 'ring' ? 'on' : ''} onClick={() => setLayoutMode('ring')}>环形</button>
-        <span style={{fontSize:'11px',color:'var(--line)',margin:'0 8px'}}>|</span>
-        <button className={showLabels === 'smart' ? 'on' : ''} onClick={() => setShowLabels('smart')}>智能标签</button>
-        <button className={showLabels === 'always' ? 'on' : ''} onClick={() => setShowLabels('always')}>全部标签</button>
-        <button className={showLabels === 'never' ? 'on' : ''} onClick={() => setShowLabels('never')}>隐藏标签</button>
-        <span className="nw-zoom-info">缩放 {zoom}×</span>
-      </div>
-    </div>
+  return React.createElement('div', null,
+    topbar, nav,
+    React.createElement('div', { style: { textAlign: 'center', padding: '20px 20px 0' } },
+      React.createElement('h1', { style: { fontFamily: 'var(--serif)', fontSize: 24, margin: 0 } }, '记忆网络'),
+      React.createElement('p', { style: { fontSize: 12, color: 'var(--ink-3)', margin: '4px 0 16px' } }, '概念共现图 · 节点 = 标签/双链 · 连线 = 同一记忆里出现'),
+    ),
+    React.createElement('div', { style: { background: 'var(--paper)', border: '0.5px solid var(--line)', borderRadius: 'var(--r-md)', margin: '0 24px 40px', padding: 4, position: 'relative' } },
+      React.createElement('canvas', { ref: canvasRef, style: { width: '100%', display: 'block', cursor: hoverNode ? 'pointer' : 'default' }, onMouseMove: handleMouseMove, onMouseLeave: handleMouseLeave, onClick: handleClick }),
+      // 图例
+      React.createElement('div', { style: { position: 'absolute', bottom: 10, right: 16, display: 'flex', gap: 14, fontSize: 11, color: 'var(--ink-3)' } },
+        React.createElement('span', null, React.createElement('span', { style: { display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: C2.accent, marginRight: 4 } }), '[[双链]]'),
+        React.createElement('span', null, React.createElement('span', { style: { display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: C2.gold, marginRight: 4 } }), '# 标签'),
+      ),
+      // hover 浮层
+      hoverNode && hoverPos && React.createElement('div', { style: { position: 'fixed', zIndex: 300, pointerEvents: 'none', left: (hoverPos.x + 16) + 'px', top: (hoverPos.y + 16) + 'px', background: 'var(--paper)', border: '0.5px solid var(--line-2)', borderRadius: 10, padding: '10px 14px', boxShadow: '0 4px 20px rgba(26,25,34,0.15)', maxWidth: 260, fontSize: 12, fontFamily: 'var(--sans)', lineHeight: 1.6, color: 'var(--ink)' } },
+        React.createElement('div', { style: { fontWeight: 600 } }, (hoverNode.kind === 'tag' ? '#' : '') + (hoverNode.label || hoverNode.id)),
+        React.createElement('div', { style: { color: 'var(--ink-3)', fontSize: 11 } }, 'freq ' + (hoverNode.freq || 1) + ' · ' + ((adjRef.current[hoverNode.id] || []).length) + ' 关联'),
+        hoverNode.anchor ? React.createElement('div', { style: { color: C2.gold, fontSize: 10, marginTop: 2 } }, '⚓ anchor') : null,
+      ),
+    ),
   );
 }
 
-// ============================================================
-// BucketItem — lazy-loads bucket detail for right drawer
-// ============================================================
-function BucketItem({ bucketId }) {
-  const [data, setData] = useState(null);
-  useEffect(() => {
-    (async () => {
-      try {
-        const resp = await fetch('/api/bucket/' + encodeURIComponent(bucketId), { credentials: 'include' });
-        if (resp.ok) setData(await resp.json());
-      } catch (e) { /* silent */ }
-    })();
-  }, [bucketId]);
-
-  if (!data) return <div className="nw-bucket-item" style={{opacity:0.5}}>加载中…</div>;
-
-  const meta = data.metadata || {};
-  return (
-    <div className="nw-bucket-item" onClick={() => window.open('/v2/?id=' + bucketId, '_blank')}>
-      <div className="nw-b-name">{meta.name || bucketId}</div>
-      <div className="nw-b-preview">{(data.content || '').slice(0, 80)}</div>
-    </div>
-  );
-}
-
-// ============================================================
-// Mount
-// ============================================================
-ReactDOM.createRoot(document.getElementById('root')).render(<NetworkApp />);
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(NetworkApp));
