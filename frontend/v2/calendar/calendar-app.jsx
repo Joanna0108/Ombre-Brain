@@ -51,6 +51,8 @@ function CalendarApp() {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
   }, [dark]);
 
+  const pad2 = n => String(n).padStart(2, '0');
+
   // Build day map from buckets
   const dayMap = useMemo(() => {
     if (!buckets) return new Map();
@@ -68,14 +70,14 @@ function CalendarApp() {
   // Build current month
   const monthData = useMemo(() => {
     const now = new Date();
-    const todayKey = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+    const todayKey = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
     const firstDow = new Date(year, month - 1, 1).getDay();
     const lastDay = new Date(year, month, 0).getDate();
     const cells = [];
     for (let i = 0; i < firstDow; i++) cells.push({ ph: true });
     let total = 0, hiCnt = 0, peakDay = 0;
     for (let d = 1; d <= lastDay; d++) {
-      const k = `${year}-${month}-${d}`;
+      const k = `${year}-${pad2(month)}-${pad2(d)}`;
       const items = dayMap.get(k) || [];
       let hasHi = false;
       for (const b of items) {
@@ -108,7 +110,7 @@ function CalendarApp() {
   };
 
   const handleDayClick = (d) => {
-    const k = `${year}-${month}-${d}`;
+    const k = `${year}-${pad2(month)}-${pad2(d)}`;
     const items = dayMap.get(k) || [];
     setSelectedDay({ year, month, day: d, items });
   };
