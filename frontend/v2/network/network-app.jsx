@@ -217,18 +217,22 @@ function NetworkApp() {
     return computeLayout(visibleData.nodes, visibleData.edges, W, H, focusId);
   }, [visibleData, focusId]);
 
-  // 绘制
+  // 绘制（用 requestAnimationFrame 等 DOM 布局完成）
   useEffect(function() {
     var canvas = canvasRef.current; if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var dpr = window.devicePixelRatio || 1;
-    var rect = canvas.parentElement.getBoundingClientRect();
-    var W = rect.width, H = Math.min(W * 0.62, 550);
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr);
-    posRef.current = { positions: positions, W: W, H: H };
-    drawNetwork(ctx, W, H, visibleData.nodes, visibleData.edges, positions, focusId, hoverNode ? hoverNode.id : null);
+    var draw = function() {
+      var ctx = canvas.getContext('2d');
+      var dpr = window.devicePixelRatio || 1;
+      var parentW = canvas.parentElement.clientWidth;
+      if (!parentW) { requestAnimationFrame(draw); return; } // 等布局
+      var W = parentW, H = Math.min(W * 0.62, 550);
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr);
+      posRef.current = { positions: positions, W: W, H: H };
+      drawNetwork(ctx, W, H, visibleData.nodes, visibleData.edges, positions, focusId, hoverNode ? hoverNode.id : null);
+    };
+    requestAnimationFrame(draw);
   }, [visibleData, positions, focusId, hoverNode]);
 
   // 事件
@@ -274,7 +278,7 @@ function NetworkApp() {
     topbar, nav,
     React.createElement('div', { style: { textAlign: 'center', padding: '20px 20px 0' } },
       React.createElement('h1', { style: { fontFamily: 'var(--serif)', fontSize: 24, margin: 0 } }, '记忆网络'),
-      React.createElement('p', { style: { fontSize: 12, color: 'var(--ink-3)', margin: '4px 0 16px' } }, '概念共现图 · 节点 = 标签/双链 · 连线 = 同一记忆里出现'),
+      React.createElement('p', { style: { fontSize: 12, color: 'var(--ink-3)', margin: '4px 0 16px' } }, '概念共现图 · ' + visibleData.nodes.length + ' 节点 · ' + visibleData.edges.length + ' 连线'),
     ),
     React.createElement('div', { style: { background: 'var(--paper)', border: '0.5px solid var(--line)', borderRadius: 'var(--r-md)', margin: '0 24px 40px', padding: 4, position: 'relative' } },
       React.createElement('canvas', { ref: canvasRef, style: { width: '100%', display: 'block', cursor: hoverNode ? 'pointer' : 'default' }, onMouseMove: handleMouseMove, onMouseLeave: handleMouseLeave, onClick: handleClick }),
