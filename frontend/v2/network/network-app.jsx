@@ -2,7 +2,8 @@
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
 var C2 = { accent: '#6e4f9a', rose: '#d291b3', gold: '#b8a3d8', sage: '#8a8898', bg: '#f4f3f7', paper: '#ffffff', ink: '#1a1922', ink3: '#8c889c', ink4: '#b8aecf', line: 'rgba(26,25,34,0.12)' };
-function nodeColor(kind) { return kind === 'tag' ? C2.gold : kind === 'mixed' ? C2.rose : C2.accent; }
+function hexToRgb(h) { var r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16); return 'rgb('+r+','+g+','+b+')'; }
+function nodeColor(kind) { var h = kind === 'tag' ? C2.gold : kind === 'mixed' ? C2.rose : C2.accent; return hexToRgb(h); }
 
 // ── 力导向布局（算完就停）──
 function computeLayout(nodes, edges, W, H, focusId) {
