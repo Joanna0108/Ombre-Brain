@@ -289,33 +289,8 @@ function ConstellationApp() {
 
   return (
     <div className="cs-root">
-      {/* 顶栏：品牌 + 统计 / 搜索 / 暗夜 */}
-      <header className="cs-topbar">
-        <div className="cs-brand">
-          <span className="cs-brand-mark" />
-          <span className="cs-brand-name">Ombre Brain</span>
-          <div className="cs-brand-stats">
-            <span><b>{stats.total}</b> 格</span>
-            <span><b>{stats.pinned}</b> 钉决</span>
-            <span><b>{stats.feel}</b> feel</span>
-            <span><b>{stats.internalized}</b> 已消化</span>
-          </div>
-        </div>
-        <div className="cs-topbar-actions">
-          {/* DarkToggle 暂隐, 等以后做"暗夜模式自动从主色派生"功能 (星图固定夜幕, 切换无意义) */}
-        </div>
-      </header>
-
-      {/* 二级导航 tab */}
-      <nav className="cs-nav">
-        <a href="/v2/cells/">记忆格</a>
-        <a href="/v2/">时间线</a>
-        <a href="/v2/network/" className="on">记忆星图</a>
-        <a href="/v2/console/import/">导入</a>
-        <a href="/v2/console/breath/">Breath 模拟</a>
-        <a href="/v2/console/config/">配置</a>
-        <a href="/v2/console/trash/">回收站</a>
-      </nav>
+      {window.SharedTopBar && <window.SharedTopBar data={data} dark={false} onDark={() => {}} />}
+      {window.SharedNav && <window.SharedNav active="network" />}
 
       {/* 页头：标题 + 副标题 + 计数 + 操作 */}
       <header className="cs-page-hd">
