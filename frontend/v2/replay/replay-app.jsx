@@ -97,7 +97,7 @@ function ReplayApp(opts) {
   var content = React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'rp-page' },
       React.createElement('div', { className: 'rp-hd' },
-        React.createElement('h1', null, '🎬 人生电影'),
+        React.createElement('h1', null, '人生电影'),
         React.createElement('p', null, 'Life Replay — LLM 生成电影式旁白纪录片'),
       ),
       React.createElement('div', { className: 'rp-controls' },
