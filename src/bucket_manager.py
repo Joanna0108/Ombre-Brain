@@ -746,6 +746,107 @@ class BucketManager:
         return True
 
     # ---------------------------------------------------------
+    # List trash (soft-deleted buckets) / 列出回收站
+    # ---------------------------------------------------------
+    async def list_trash(self) -> list[dict]:
+        """Return all soft-deleted buckets (in archive/ with deleted_at)."""
+        trash: list[dict] = []
+        archive_root = self.archive_dir
+        if not os.path.isdir(archive_root):
+            return trash
+
+        for root, _dirs, files in os.walk(archive_root):
+            for fn in files:
+                if not fn.endswith(".md"):
+                    continue
+                fp = os.path.join(root, fn)
+                try:
+                    post = frontmatter.load(fp)
+                except Exception:
+                    continue
+                meta = post.metadata
+                if not meta.get("deleted_at"):
+                    continue
+                bucket_id = meta.get("id", "")
+                trash.append({
+                    "id": bucket_id,
+                    "name": meta.get("name", bucket_id),
+                    "type": meta.get("type", "dynamic"),
+                    "deleted_at": meta.get("deleted_at", ""),
+                    "content_preview": (post.content or "")[:200],
+                    "tags": meta.get("tags", []),
+                    "domain": meta.get("domain", []),
+                    "importance": meta.get("importance", 5),
+                })
+        trash.sort(key=lambda x: x.get("deleted_at", ""), reverse=True)
+        return trash
+
+    # ---------------------------------------------------------
+    # Restore bucket from trash / 从回收站恢复
+    # ---------------------------------------------------------
+    async def restore(self, bucket_id: str) -> bool:
+        """Move a soft-deleted bucket back from archive/ and clear deleted_at."""
+        file_path = self._find_bucket_file(bucket_id)
+        if not file_path:
+            # May have been embedded-only; try archive directory directly
+            for root, _dirs, files in os.walk(self.archive_dir):
+                for fn in files:
+                    if bucket_id in fn and fn.endswith(".md"):
+                        file_path = os.path.join(root, fn)
+                        break
+                if file_path:
+                    break
+        if not file_path:
+            return False
+
+        try:
+            post = frontmatter.load(file_path)
+            if "deleted_at" in post.metadata:
+                del post["deleted_at"]
+            # Move back to dynamic/ (original directory info is lost, dynamic is safe)
+            dest_dir = os.path.join(self.base_dir, "dynamic")
+            os.makedirs(dest_dir, exist_ok=True)
+            dest = os.path.join(dest_dir, os.path.basename(file_path))
+            if os.path.exists(dest) and dest != file_path:
+                dest = os.path.join(dest_dir, f"{os.path.splitext(os.path.basename(file_path))[0]}_{bucket_id}.md")
+            with open(dest, "w", encoding="utf-8") as f:
+                f.write(frontmatter.dumps(post))
+            if dest != file_path:
+                os.remove(file_path)
+        except OSError as e:
+            logger.error(f"Failed to restore bucket: {file_path}: {e}")
+            return False
+
+        self._invalidate_bm25()
+        logger.info(f"Restored bucket from trash / 恢复记忆桶: {bucket_id}")
+        return True
+
+    # ---------------------------------------------------------
+    # Purge bucket permanently / 永久删除
+    # ---------------------------------------------------------
+    async def purge(self, bucket_id: str) -> bool:
+        """Permanently delete a bucket file and its embedding."""
+        file_path = self._find_bucket_file(bucket_id)
+        if not file_path:
+            return False
+
+        try:
+            os.remove(file_path)
+        except OSError as e:
+            logger.error(f"Failed to purge bucket file: {file_path}: {e}")
+            return False
+
+        if self.embedding_engine is not None:
+            try:
+                self.embedding_engine.delete_embedding(bucket_id)
+            except Exception as e:
+                logger.warning(f"purge embedding failed for {bucket_id}: {e}")
+
+        self._invalidate_bm25()
+        logger.info(f"Permanently purged bucket / 永久删除记忆桶: {bucket_id}")
+        return True
+
+    # ---------------------------------------------------------
     # Touch bucket (refresh activation time + increment count)
     # 触碰桶（刷新激活时间 + 累加激活次数）
     # Called on every recall hit; affects decay score.

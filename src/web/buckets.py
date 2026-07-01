@@ -781,6 +781,51 @@ def register(mcp) -> None:
     # /api/letters、/api/letter、/letters、/api/letter/{id} —— 已拆分到 web/letters.py
     # =============================================================
 
+    # ============================================================
+    # /api/trash — list soft-deleted buckets / 回收站列表
+    # ============================================================
+    @mcp.custom_route("/api/trash", methods=["GET"])
+    async def api_trash(request: Request) -> Response:
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        try:
+            trash = await sh.bucket_mgr.list_trash()
+            return JSONResponse({"trash": trash})
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    # ============================================================
+    # POST /api/bucket/{bucket_id}/restore — restore from trash
+    # ============================================================
+    @mcp.custom_route("/api/bucket/{bucket_id}/restore", methods=["POST"])
+    async def api_bucket_restore(request: Request) -> Response:
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        bucket_id = request.path_params["bucket_id"]
+        ok = await sh.bucket_mgr.restore(bucket_id)
+        if not ok:
+            return JSONResponse({"error": "restore failed"}, status_code=500)
+        return JSONResponse({"ok": True, "id": bucket_id})
+
+    # ============================================================
+    # POST /api/bucket/{bucket_id}/purge — permanently delete
+    # ============================================================
+    @mcp.custom_route("/api/bucket/{bucket_id}/purge", methods=["POST"])
+    async def api_bucket_purge(request: Request) -> Response:
+        from starlette.responses import JSONResponse
+        err = sh._require_auth(request)
+        if err:
+            return err
+        bucket_id = request.path_params["bucket_id"]
+        ok = await sh.bucket_mgr.purge(bucket_id)
+        if not ok:
+            return JSONResponse({"error": "purge failed"}, status_code=500)
+        return JSONResponse({"ok": True, "id": bucket_id})
+
 
     @mcp.custom_route("/api/self", methods=["GET"])
     async def api_self(request: Request) -> Response:
