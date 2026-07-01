@@ -7,12 +7,13 @@ const QUAD_LABELS = { ha_hv: '兴奋', ha_lv: '紧张', la_hv: '放松', la_lv: 
 // v2 色板
 var C = { accent: '#6e4f9a', rose: '#d291b3', gold: '#b8a3d8', sage: '#8a8898', bg: '#f4f3f7', paper: '#ffffff', ink: '#1a1922', ink3: '#8c889c', ink4: '#b8aecf', line: 'rgba(26,25,34,0.12)' };
 function valenceRGB(v) {
-  var r = Math.round(210 - v * 100), g = Math.round(145 - v * 30), b = Math.round(179 + v * 30);
+  // 暖色渐变：负面(蓝灰)→中性(灰紫)→正面(玫粉)，整体更亮
+  var r = Math.round(160 - v * 40 + (1-v)*50), g = Math.round(150 - v * 30), b = Math.round(200 + v * 50);
   return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 
 // ── 罗盘 Canvas ──
-function drawCompass(canvas, feelBuckets, dayItems, dotDataRef) {
+function drawCompass(canvas, feelBuckets, dayItems, dotDataRef, hoveredDot) {
   if (!canvas || !feelBuckets || !feelBuckets.length) return;
   var ctx = canvas.getContext('2d');
   var dpr = window.devicePixelRatio || 1;
@@ -61,7 +62,7 @@ function drawCompass(canvas, feelBuckets, dayItems, dotDataRef) {
     var px = cx + ((b.valence ?? 0.5) - 0.5) * 2 * R;
     var py = cy - ((b.arousal ?? 0.3) - 0.5) * 2 * R;
     var r = 2.5 + (b.importance || 5) / 10 * 3;
-    var alpha = daySet ? (daySet.has(b.id) ? 0.9 : 0.12) : 0.7;
+    var alpha = daySet ? (daySet.has(b.id) ? 0.88 : 0.15) : 0.78;
     var col = valenceRGB(b.valence ?? 0.5);
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
     ctx.fillStyle = col.replace('rgb', 'rgba').replace(')', ', ' + alpha + ')');
@@ -72,6 +73,20 @@ function drawCompass(canvas, feelBuckets, dayItems, dotDataRef) {
     if (isHi) { ctx.strokeStyle = C.rose; ctx.lineWidth = 1.5; ctx.stroke(); }
     allDots.push({ x: px, y: py, r: r + 3, item: b });
   });
+
+  // hover 发光圈
+  if (hoveredDot && hoveredDot.item) {
+    var hItem = hoveredDot.item;
+    var hpx = cx + ((hItem.valence ?? 0.5) - 0.5) * 2 * R;
+    var hpy = cy - ((hItem.arousal ?? 0.3) - 0.5) * 2 * R;
+    var hr = 4 + (hItem.importance || 5) / 10 * 5;
+    ctx.beginPath(); ctx.arc(hpx, hpy, hr, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(210,145,179,0.3)';
+    ctx.shadowColor = C.rose; ctx.shadowBlur = 14;
+    ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+    ctx.strokeStyle = C.rose; ctx.lineWidth = 2; ctx.stroke();
+  }
 
   // 外环
   ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
@@ -152,6 +167,7 @@ function MoodApp(opts) {
   var [error, setError] = useState(null);
   var [expandedDay, setExpandedDay] = useState(null);
   var [selectedDay, setSelectedDay] = useState(null);
+  var [hoveredDot, setHoveredDot] = useState(null);  // { x, y, item } | null
   var compassRef = useRef(null);
   var chartRef = useRef(null);
   var dotsRef = useRef({ dots: [] });
@@ -199,8 +215,8 @@ function MoodApp(opts) {
   // 画布
   useEffect(function() {
     var selItems = selectedDay ? (dayData.find(function(d) { return d.date === selectedDay; }) || {}).items : null;
-    drawCompass(compassRef.current, feelBuckets, selItems, dotsRef);
-  }, [feelBuckets, selectedDay]);
+    drawCompass(compassRef.current, feelBuckets, selItems, dotsRef, hoveredDot);
+  }, [feelBuckets, selectedDay, hoveredDot]);
 
   useEffect(function() { drawChart(chartRef.current, dayData); }, [dayData]);
 
@@ -214,9 +230,9 @@ function MoodApp(opts) {
       var dot = d.dots[i];
       if (Math.hypot(mx - dot.x, my - dot.y) < dot.r) { found = dot; break; }
     }
-    compassRef.current.style.cursor = found ? 'pointer' : 'default';
-    compassRef.current.title = found ? (found.item.title || found.item.id) + '\nV' + (found.item.valence ?? 0.5).toFixed(2) + ' A' + (found.item.arousal ?? 0.3).toFixed(2) : '';
+    setHoveredDot(found ? { x: e.clientX, y: e.clientY, item: found.item } : null);
   };
+  var handleCompassLeave = function() { setHoveredDot(null); };
   var handleCompassClick = function(e) {
     var d = dotsRef.current;
     var rect = compassRef.current.getBoundingClientRect();
@@ -239,12 +255,17 @@ function MoodApp(opts) {
     React.createElement('div', { className: 'md-main' },
       React.createElement('aside', { className: 'md-left' },
         React.createElement('h3', null, '象限'),
-        Object.entries(quadStats).map(function(e) { return React.createElement('div', { key: e[0], className: 'md-stat' }, (QUAD_LABELS[e[0]] || e[0]) + ' · ' + React.createElement('b', null, e[1])); }),
+        Object.entries(quadStats).map(function(e) { return React.createElement('div', { key: e[0], className: 'md-stat' }, React.createElement('span', null, (QUAD_LABELS[e[0]] || e[0]) + ' · '), React.createElement('b', null, e[1])); }),
         React.createElement('div', { className: 'md-stat', style: { marginTop: 6 } }, '共 ' + dayData.length + ' 天'),
       ),
       React.createElement('div', { style: { flex: 1, overflow: 'auto' } },
         React.createElement('div', { style: { background: 'var(--paper)', borderBottom: '0.5px solid var(--line)', padding: 12 } },
-          React.createElement('canvas', { ref: compassRef, style: { width: '100%', display: 'block', cursor: 'default' }, onMouseMove: handleCompassMove, onClick: handleCompassClick }),
+          React.createElement('canvas', { ref: compassRef, style: { width: '100%', display: 'block', cursor: hoveredDot ? 'pointer' : 'default' }, onMouseMove: handleCompassMove, onMouseLeave: handleCompassLeave, onClick: handleCompassClick }),
+          hoveredDot && React.createElement('div', { style: { position:'fixed', zIndex:300, pointerEvents:'none', left: (hoveredDot.x + 16) + 'px', top: (hoveredDot.y + 16) + 'px', background:'var(--paper)', border:'0.5px solid var(--line-2)', borderRadius:10, padding:'10px 14px', boxShadow:'0 4px 20px rgba(26,25,34,0.15)', maxWidth:260, fontSize:12, fontFamily:'var(--sans)', lineHeight:1.6, color:'var(--ink)' } },
+            React.createElement('div', { style: { fontWeight:600, marginBottom:2 } }, hoveredDot.item.title || hoveredDot.item.id),
+            React.createElement('div', { style: { color:'var(--ink-3)', fontSize:11 } }, 'V ' + (hoveredDot.item.valence ?? 0.5).toFixed(2) + ' · A ' + (hoveredDot.item.arousal ?? 0.3).toFixed(2)),
+            (hoveredDot.item.highlight || (hoveredDot.item.importance || 5) >= 8) ? React.createElement('div', { style: { color:C.rose, fontSize:10, marginTop:2 } }, '✦ 重要') : null,
+          ),
         ),
         dayData.length > 0 && React.createElement('div', { style: { background: 'var(--paper)', borderBottom: '0.5px solid var(--line)', padding: '12px 20px' } },
           React.createElement('div', { style: { fontSize: 12, color: 'var(--ink-3)', marginBottom: 6, fontFamily: 'var(--serif)' } }, '情绪趋势'),
