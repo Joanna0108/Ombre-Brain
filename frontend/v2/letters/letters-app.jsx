@@ -21,7 +21,7 @@ function LettersApp(opts) {
       ]);
       if (!lr.ok) throw new Error('HTTP ' + lr.status);
       const d = await lr.json();
-      setLetters(Array.isArray(d) ? d : []);
+      setLetters(Array.isArray(d) ? d : (d.letters || []));
       if (br.ok) { const bd = await br.json(); setBucketsData(Array.isArray(bd) ? bd : []); }
     } catch (e) { setError(e.message); } finally { setLoading(false); }
   };
