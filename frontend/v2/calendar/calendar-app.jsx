@@ -34,10 +34,8 @@ function CalendarApp() {
   useEffect(() => {
     (async () => {
       try {
-        const resp = await fetch('/api/buckets', { credentials: 'include' });
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const data = await resp.json();
-        const arr = Array.isArray(data) ? data : [];
+        // 走 ombre-bridge 拿处理过的数据（含 date/time）而不是裸 API
+        const arr = await window.__obFetchBuckets();
         setBuckets(arr);
         setBucketsData(arr);
       } catch (e) {
