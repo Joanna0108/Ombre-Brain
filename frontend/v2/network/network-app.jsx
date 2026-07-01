@@ -261,8 +261,14 @@ function NetworkApp() {
 
   var topbar = React.createElement(window.SharedTopBar, { data: bucketsData, dark: dark, onDark: setDark });
   var nav = React.createElement(window.SharedNav, { active: 'network' });
-  if (loading) return React.createElement('div', null, topbar, nav, React.createElement('div', { className: 'nw-loading' }, '载入记忆网络…'));
-  if (error) return React.createElement('div', null, topbar, nav, React.createElement('div', { className: 'nw-loading' }, '加载失败: ' + error));
+  if (loading) return React.createElement('div', null, topbar, nav, React.createElement('div', { style: { textAlign:'center',padding:60,color:'var(--ink-3)',fontFamily:'var(--serif)',fontSize:18 } }, '载入记忆网络…'));
+  if (error) return React.createElement('div', null, topbar, nav, React.createElement('div', { style: { textAlign:'center',padding:40,color:'var(--rose)',fontFamily:'var(--mono)',fontSize:13 } }, '加载失败: ' + error));
+  if (graph && (!graph.nodes || graph.nodes.length === 0)) return React.createElement('div', null, topbar, nav,
+    React.createElement('div', { style: { textAlign:'center',padding:40,color:'var(--ink-3)',fontFamily:'var(--serif)',fontSize:15 } },
+      React.createElement('p', null, '记忆网络是空的'),
+      React.createElement('p', { style: { fontSize:12, color:'var(--ink-4)', marginTop:8 } }, '需要在记忆里使用 [[双链]] 或 #标签，网络才会生成节点。'),
+      React.createElement('p', { style: { fontSize:11, color:'var(--ink-4)', marginTop:4 } }, 'nodes: ' + (graph.nodes ? graph.nodes.length : 0) + ' · edges: ' + (graph.edges ? graph.edges.length : 0)),
+    ));
 
   return React.createElement('div', null,
     topbar, nav,
