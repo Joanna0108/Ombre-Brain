@@ -43,7 +43,7 @@ function AnchorsApp(opts) {
   var content = React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'an-page' },
       React.createElement('div', { className: 'an-hd' },
-        React.createElement('h1', null, '⚓ 锚点'),
+        React.createElement('h1', null, '锚点'),
         React.createElement('p', null, '锚定义你是谁。默认不出现在 breath 中，只在 query/domain/emotion 匹配时才浮现。硬上限 24。'),
         React.createElement('p', { style: { fontSize: 13, marginTop: 4, color: 'var(--accent)' } },
           anchors.length + ' / ' + limit + ' 槽已用' + (anchors.length >= limit ? ' ⚠️ 已满' : '')

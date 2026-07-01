@@ -372,7 +372,7 @@ function SettingsApp(opts) {
   }
 
   var content = ce('div', { className: 'st-page' },
-    ce('div', { className: 'st-hd' }, ce('h1', null, '⚙️ 设置')),
+    ce('div', { className: 'st-hd' }, ce('h1', null, '设置')),
     msg ? ce('div', { style: { textAlign: 'center', fontSize: 12, color: 'var(--accent)', marginBottom: 8 } }, msg) : null,
     ce('div', { className: 'st-tabs' },
       TABS.map(function(t) { return ce('button', { key: t, className: curTab === t ? 'on' : '', onClick: function() { setTab(t); } }, t); }),

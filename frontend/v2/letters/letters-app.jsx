@@ -82,7 +82,7 @@ function LettersApp(opts) {
   var content = React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'lt-page' },
       React.createElement('div', { className: 'lt-hd' },
-        React.createElement('h1', null, '💌 两封信'),
+        React.createElement('h1', null, '两封信'),
         React.createElement('p', null, 'AI 写给未来和过去的信'),
       ),
 

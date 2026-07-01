@@ -60,7 +60,7 @@ function LogsApp() {
     React.createElement(window.SharedNav, { active: 'logs' }),
     React.createElement('div', { className: 'lg-page' },
       React.createElement('div', { className: 'lg-hd' },
-        React.createElement('h1', null, '📋 日志'),
+        React.createElement('h1', null, '日志'),
       ),
 
       // ── Service Logs ──
